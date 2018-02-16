@@ -75,6 +75,15 @@ var World = new Class({
         this.staticBodies = new Set();
 
         /**
+         * Static Bodies
+         *
+         * @name Phaser.Physics.Arcade.World#pendingDestroy
+         * @type {Phaser.Structs.Set}
+         * @since 3.1.0
+         */
+        this.pendingDestroy = new Set();
+
+        /**
          * [description]
          *
          * @name Phaser.Physics.Arcade.World#colliders
@@ -364,7 +373,7 @@ var World = new Class({
                 }
                 else
                 {
-                    this.disableBody(object[i]);
+                    this.disableGameObjectBody(object[i]);
                 }
             }
         }
@@ -375,21 +384,21 @@ var World = new Class({
         }
         else
         {
-            this.disableBody(object);
+            this.disableGameObjectBody(object);
         }
     },
 
     /**
      * [description]
      *
-     * @method Phaser.Physics.Arcade.World#disableBody
-     * @since 3.0.0
+     * @method Phaser.Physics.Arcade.World#disableGameObjectBody
+     * @since 3.1.0
      *
      * @param {Phaser.GameObjects.GameObject} object - [description]
      *
      * @return {Phaser.GameObjects.GameObject} [description]
      */
-    disableBody: function (object)
+    disableGameObjectBody: function (object)
     {
         if (object.body)
         {
@@ -403,11 +412,34 @@ var World = new Class({
                 this.staticTree.remove(object.body);
             }
 
-            object.body.destroy();
-            object.body = null;
+            object.body.enable = false;
         }
 
         return object;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.World#disableBody
+     * @since 3.0.0
+     *
+     * @param {Phaser.Physics.Arcade.Body} body - [description]
+     */
+    disableBody: function (body)
+    {
+        if (body.physicsType === CONST.DYNAMIC_BODY)
+        {
+            this.tree.remove(body);
+            this.bodies.delete(body);
+        }
+        else if (body.physicsType === CONST.STATIC_BODY)
+        {
+            this.staticBodies.delete(body);
+            this.staticTree.remove(body);
+        }
+
+        body.enable = false;
     },
 
     /**
@@ -659,7 +691,12 @@ var World = new Class({
     {
         var i;
         var body;
-        var bodies = this.bodies.entries;
+
+        var dynamic = this.bodies;
+        var static = this.staticBodies;
+        var pending = this.pendingDestroy;
+
+        var bodies = dynamic.entries;
         var len = bodies.length;
 
         for (i = 0; i < len; i++)
@@ -688,7 +725,7 @@ var World = new Class({
                 }
             }
 
-            bodies = this.staticBodies.entries;
+            bodies = static.entries;
             len = bodies.length;
 
             for (i = 0; i < len; i++)
@@ -700,6 +737,36 @@ var World = new Class({
                     body.drawDebug(graphics);
                 }
             }
+        }
+
+        if (pending.size > 0)
+        {
+            var dynamicTree = this.tree;
+            var staticTree = this.staticTree;
+
+            bodies = pending.entries;
+            len = bodies.length;
+
+            for (i = 0; i < len; i++)
+            {
+                body = bodies[i];
+
+                if (body.physicsType === CONST.DYNAMIC_BODY)
+                {
+                    dynamicTree.remove(body);
+                    dynamic.delete(body);
+                }
+                else if (body.physicsType === CONST.STATIC_BODY)
+                {
+                    staticTree.remove(body);
+                    static.delete(body);
+                }
+
+                body.world = undefined;
+                body.gameObject = undefined;
+            }
+
+            pending.clear();
         }
     },
 
@@ -1403,12 +1470,12 @@ var World = new Class({
      */
     collideSpriteVsGroup: function (sprite, group, collideCallback, processCallback, callbackContext, overlapOnly)
     {
-        if (group.length === 0)
+        var bodyA = sprite.body;
+
+        if (group.length === 0 || !bodyA)
         {
             return;
         }
-
-        var bodyA = sprite.body;
 
         //  Does sprite collide with anything?
 
@@ -1608,6 +1675,13 @@ var World = new Class({
         {
             return;
         }
+
+        var children = group1.getChildren();
+
+        for (var i = 0; i < children.length; i++)
+        {
+            this.collideSpriteVsGroup(children[i], group2, collideCallback, processCallback, callbackContext, overlapOnly);
+        }
     },
 
     /**
@@ -1629,6 +1703,12 @@ var World = new Class({
      */
     destroy: function ()
     {
+        this.tree.clear();
+        this.staticTree.clear();
+        this.bodies.clear();
+        this.staticBodies.clear();
+        this.colliders.destroy();
+
         this.removeAllListeners();
     }
 

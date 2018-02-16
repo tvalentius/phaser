@@ -1073,28 +1073,29 @@ var Body = new Class({
     },
 
     /**
-     * [description]
+     * Resets this Body to the given coordinates. Also positions its parent Game Object to the same coordinates.
+     * If the body had any velocity or acceleration it is lost as a result of calling this.
      *
      * @method Phaser.Physics.Arcade.Body#reset
      * @since 3.0.0
      *
-     * @param {number} x - [description]
-     * @param {number} y - [description]
+     * @param {number} x - The horizontal position to place the Game Object and Body.
+     * @param {number} y - The vertical position to place the Game Object and Body.
      */
     reset: function (x, y)
     {
         this.stop();
 
-        var sprite = this.gameObject;
+        var gameObject = this.gameObject;
 
-        this.position.x = x - sprite.displayOriginX + (sprite.scaleX * this.offset.x);
-        this.position.y = y - sprite.displayOriginY + (sprite.scaleY * this.offset.y);
+        gameObject.setPosition(x, y);
 
-        this.prev.x = this.position.x;
-        this.prev.y = this.position.y;
+        gameObject.getTopLeft(this.position);
 
-        this.rotation = this.gameObject.angle;
-        this.preRotation = this.rotation;
+        this.prev.copy(this.position);
+
+        this.rotation = gameObject.angle;
+        this.preRotation = gameObject.angle;
 
         this.updateBounds();
         this.updateCenter();
@@ -1267,8 +1268,9 @@ var Body = new Class({
      */
     destroy: function ()
     {
-        this.gameObject.body = null;
-        this.gameObject = null;
+        this.enable = false;
+
+        this.world.pendingDestroy.set(this);
     },
 
     /**
