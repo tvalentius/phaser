@@ -6,8 +6,7 @@
 
 var Class = require('../../../utils/Class');
 var ShaderSourceFS = require('../shaders/BitmapMask.frag');
-var ShaderSourceVS = require('../shaders/BitmapMask.vert'); 
-var Utils = require('../Utils');
+var ShaderSourceVS = require('../shaders/BitmapMask.vert');
 var WebGLPipeline = require('../WebGLPipeline');
 
 /**
@@ -41,7 +40,7 @@ var BitmapMaskPipeline = new Class({
             fragShader: ShaderSourceFS,
             vertexCapacity: 3,
 
-            vertexSize: 
+            vertexSize:
                 Float32Array.BYTES_PER_ELEMENT * 2,
 
             vertices: new Float32Array([

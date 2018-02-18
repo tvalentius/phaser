@@ -7,8 +7,6 @@
 var Class = require('../../../utils/Class');
 var ShaderSourceFS = require('../shaders/ForwardDiffuse.frag');
 var TextureTintPipeline = require('./TextureTintPipeline');
-var Utils = require('../Utils');
-var WebGLPipeline = require('../WebGLPipeline');
 
 var LIGHT_COUNT = 10;
 
@@ -89,18 +87,19 @@ var ForwardDiffuseLightPipeline = new Class({
         var cameraMatrix = camera.matrix;
         var point = {x: 0, y: 0};
         var height = renderer.height;
+        var index;
 
-        for (var index = 0; index < LIGHT_COUNT; ++index)
+        for (index = 0; index < LIGHT_COUNT; ++index)
         {
             renderer.setFloat1(program, 'uLights[' + index + '].radius', 0); // reset lights
         }
 
-        if (lightCount <= 0) return this;
+        if (lightCount <= 0) { return this; }
 
         renderer.setFloat4(program, 'uCamera', camera.x, camera.y, camera.rotation, camera.zoom);
         renderer.setFloat3(program, 'uAmbientLightColor', lightManager.ambientColor.r, lightManager.ambientColor.g, lightManager.ambientColor.b);
 
-        for (var index = 0; index < lightCount; ++index)
+        for (index = 0; index < lightCount; ++index)
         {
             var light = lights[index];
             var lightName = 'uLights[' + index + '].';

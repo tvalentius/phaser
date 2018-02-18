@@ -11,6 +11,8 @@ var Collider = require('./Collider');
 var CONST = require('./const');
 var DistanceBetween = require('../../math/distance/DistanceBetween');
 var EventEmitter = require('eventemitter3');
+var GetOverlapX = require('./GetOverlapX');
+var GetOverlapY = require('./GetOverlapY');
 var GetValue = require('../../utils/object/GetValue');
 var ProcessQueue = require('../../structs/ProcessQueue');
 var ProcessTileCallbacks = require('./tilemap/ProcessTileCallbacks');
@@ -1388,6 +1390,7 @@ var World = new Class({
                 return this.collideSpriteVsTilemapLayer(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
             }
         }
+
         //  GROUPS
         else if (object1.isParent)
         {
@@ -1404,6 +1407,7 @@ var World = new Class({
                 return this.collideGroupVsTilemapLayer(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
             }
         }
+
         //  TILEMAP LAYERS
         else if (object1.isTilemap)
         {
@@ -1546,7 +1550,8 @@ var World = new Class({
         {
             if (children[i].body)
             {
-                if (this.collideSpriteVsTilemapLayer(children[i], tilemapLayer, collideCallback, processCallback, callbackContext, overlapOnly)) {
+                if (this.collideSpriteVsTilemapLayer(children[i], tilemapLayer, collideCallback, processCallback, callbackContext, overlapOnly))
+                {
                     didCollide = true;
                 }
             }

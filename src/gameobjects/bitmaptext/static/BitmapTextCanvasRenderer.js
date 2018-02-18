@@ -62,7 +62,6 @@ var BitmapTextCanvasRenderer = function (renderer, src, interpolationPercentage,
     var textureX = textureFrame.cutX;
     var textureY = textureFrame.cutY;
 
-    var rotation = 0;
     var scale = (src.fontSize / src.fontData.size);
 
     //  Blend Mode
@@ -144,6 +143,7 @@ var BitmapTextCanvasRenderer = function (renderer, src, interpolationPercentage,
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(scale, scale);
+
         // ctx.fillRect(0, 0, glyphW, glyphH);
         ctx.drawImage(image, glyphX, glyphY, glyphW, glyphH, 0, 0, glyphW, glyphH);
         ctx.restore();
