@@ -1,5 +1,19 @@
 # Change Log
 
+## Version 3.1.2 - In Development
+
+### Updates
+
+* Hundreds of JSDoc fixes across the whole API.
+* Tween.updateTweenData will now check to see if the Tween target still exists before trying to update its properties.
+
+### Bug Fixes
+
+* The KeyCode `FORWAD_SLASH` had a typo and has been changed to `FORWAD_SLASH`. Fix #3271 (thanks @josedarioxyz)
+
+
+
+
 ## Version 3.1.1 - 20th February 2018
 
 ### Updates
