@@ -158,7 +158,7 @@ var ScenePlugin = new Class({
         {
             if (this.settings.status !== CONST.RUNNING)
             {
-                this.manager.queueOp('start', key);
+                this.manager.queueOp('start', key, data);
             }
             else
             {
@@ -392,6 +392,31 @@ var ScenePlugin = new Class({
         {
             this.manager.swapPosition(this.key, key);
         }
+
+        return this;
+    },
+
+    /**
+     * Removes a Scene from the SceneManager.
+     *
+     * The Scene is removed from the local scenes array, it's key is cleared from the keys
+     * cache and Scene.Systems.destroy is then called on it.
+     *
+     * If the SceneManager is processing the Scenes when this method is called it wil
+     * queue the operation for the next update sequence.
+     *
+     * @method Phaser.Scenes.ScenePlugin#remove
+     * @since 3.2.0
+     *
+     * @param {string|Phaser.Scene} scene - The Scene to be removed.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    remove: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.remove(key);
 
         return this;
     },

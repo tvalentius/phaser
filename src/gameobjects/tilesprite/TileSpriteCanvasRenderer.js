@@ -30,6 +30,8 @@ var TileSpriteCanvasRenderer = function (renderer, src, interpolationPercentage,
     var ctx = renderer.currentContext;
     var frame = src.frame;
 
+    src.updateTileTexture();
+
     //  Blend Mode
 
     if (renderer.currentBlendMode !== src.blendMode)
@@ -56,12 +58,29 @@ var TileSpriteCanvasRenderer = function (renderer, src, interpolationPercentage,
     var dx = frame.x - (src.originX * src.width);
     var dy = frame.y - (src.originY * src.height);
 
+    var tx = src.x - camera.scrollX * src.scrollFactorX;
+    var ty = src.y - camera.scrollY * src.scrollFactorY;
+
+    if (renderer.config.roundPixels)
+    {
+        dx |= 0;
+        dy |= 0;
+        tx |= 0;
+        ty |= 0;
+    }
+
     ctx.save();
+
     ctx.translate(dx, dy);
-    ctx.translate(src.x - camera.scrollX * src.scrollFactorX, src.y - camera.scrollY * src.scrollFactorY);
+
+    ctx.translate(tx, ty);
+
     ctx.fillStyle = src.canvasPattern;
+
     ctx.translate(-this.tilePositionX, -this.tilePositionY);
+
     ctx.fillRect(this.tilePositionX, this.tilePositionY, src.width, src.height);
+
     ctx.restore();
 };
 

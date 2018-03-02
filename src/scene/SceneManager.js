@@ -166,13 +166,13 @@ var SceneManager = new Class({
             return;
         }
 
-        for (i = 0; i < queueLength; i++)
+        for (i = 0; i < this._queue.length; i++)
         {
             entry = this._queue[i];
 
             this[entry.op](entry.keyA, entry.keyB);
         }
-        
+
         this._queue.length = 0;
     },
 
@@ -258,6 +258,58 @@ var SceneManager = new Class({
     },
 
     /**
+     * Removes a Scene from the SceneManager.
+     *
+     * The Scene is removed from the local scenes array, it's key is cleared from the keys
+     * cache and Scene.Systems.destroy is then called on it.
+     *
+     * If the SceneManager is processing the Scenes when this method is called it wil
+     * queue the operation for the next update sequence.
+     *
+     * @method Phaser.Scenes.SceneManager#remove
+     * @since 3.2.0
+     *
+     * @param {string|Phaser.Scene} scene - The Scene to be removed.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    remove: function (key)
+    {
+        if (this._processing)
+        {
+            this._queue.push({ op: 'remove', keyA: key, keyB: null });
+        }
+        else
+        {
+            var sceneToRemove = this.getScene(key);
+
+            if (!sceneToRemove)
+            {
+                return this;
+            }
+
+            var index = this.scenes.indexOf(sceneToRemove);
+            var sceneKey = sceneToRemove.sys.settings.key;
+
+            if (index > -1)
+            {
+                this.keys[sceneKey] = undefined;
+                this.scenes.splice(index, 1);
+
+                if (this._start.indexOf(sceneKey) > -1)
+                {
+                    index = this._start.indexOf(sceneKey);
+                    this._start.splice(index, 1);
+                }
+
+                sceneToRemove.sys.destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
      * [description]
      *
      * @method Phaser.Scenes.SceneManager#bootScene
@@ -278,7 +330,7 @@ var SceneManager = new Class({
         if (scene.sys.load)
         {
             loader = scene.sys.load;
-                
+
             loader.reset();
         }
 
@@ -362,6 +414,26 @@ var SceneManager = new Class({
             {
                 sys.step(time, delta);
             }
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Scenes.SceneManager#resize
+     * @since 3.2.0
+     *
+     * @param {number} width - The new width of the game.
+     * @param {number} height - The new height of the game.
+     */
+    resize: function (width, height)
+    {
+        //  Loop through the scenes in forward order
+        for (var i = 0; i < this.scenes.length; i++)
+        {
+            var sys = this.scenes[i].sys;
+
+            sys.resize(width, height);
         }
     },
 
@@ -852,7 +924,7 @@ var SceneManager = new Class({
                     return this;
                 }
             }
-            
+
             this.bootScene(scene);
         }
 

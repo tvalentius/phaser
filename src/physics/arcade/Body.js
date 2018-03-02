@@ -324,7 +324,7 @@ var Body = new Class({
         //  If true this Body will dispatch events
 
         /**
-         * [description]
+         * Emit a `worldbounds` event when this body collides with the world bounds (and `collideWorldBounds` is also true).
          *
          * @name Phaser.Physics.Arcade.Body#onWorldBounds
          * @type {boolean}
@@ -788,8 +788,8 @@ var Body = new Class({
 
         var sprite = this.gameObject;
 
-        this.position.x = sprite.x - sprite.displayOriginX + (sprite.scaleX * this.offset.x);
-        this.position.y = sprite.y - sprite.displayOriginY + (sprite.scaleY * this.offset.y);
+        this.position.x = sprite.x + sprite.scaleX * (this.offset.x - sprite.displayOriginX);
+        this.position.y = sprite.y + sprite.scaleY * (this.offset.y - sprite.displayOriginY);
 
         this.updateCenter();
 
@@ -852,29 +852,29 @@ var Body = new Class({
 
         this.dirty = false;
 
-        if (this.deltaX() < 0)
+        this._dx = this.deltaX();
+        this._dy = this.deltaY();
+
+        if (this._dx < 0)
         {
             this.facing = CONST.FACING_LEFT;
         }
-        else if (this.deltaX() > 0)
+        else if (this._dx > 0)
         {
             this.facing = CONST.FACING_RIGHT;
         }
 
-        if (this.deltaY() < 0)
+        if (this._dy < 0)
         {
             this.facing = CONST.FACING_UP;
         }
-        else if (this.deltaY() > 0)
+        else if (this._dy > 0)
         {
             this.facing = CONST.FACING_DOWN;
         }
 
         if (this.moves)
         {
-            this._dx = this.deltaX();
-            this._dy = this.deltaY();
-
             if (this.deltaMax.x !== 0 && this._dx !== 0)
             {
                 if (this._dx < 0 && this._dx < -this.deltaMax.x)
@@ -1002,6 +1002,8 @@ var Body = new Class({
     {
         if (center === undefined) { center = true; }
 
+        var gameObject = this.gameObject;
+
         this.sourceWidth = width;
         this.sourceHeight = height;
 
@@ -1013,10 +1015,8 @@ var Body = new Class({
 
         this.updateCenter();
 
-        if (center && this.gameObject.getCenter)
+        if (center && gameObject.getCenter)
         {
-            var gameObject = this.gameObject;
-
             var ox = gameObject.displayWidth / 2;
             var oy = gameObject.displayHeight / 2;
 

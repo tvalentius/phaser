@@ -3,8 +3,43 @@
 ## Version 3.2.0 - In Development
 
 ### New Features
+
+* Game.resize allows you to resize the game config, renderer and input system in one call.
+* InputManager.resize allows you to update the bounds def and input scale in one call.
+* Game.Config.roundPixels property added to prevent sub-pixel interpolation during rendering of Game Objects in WebGL and Canvas.
+* Load.plugin now accepts a class as an argument as well as a URL string (thanks @nkholski)
+* Tween.complete will allow you to flag a tween as being complete, no matter what stage it is at. If an onComplete callback has been defined it will be invoked. You can set an optional delay before this happens (thanks @Jerenaux for the idea)
+* The Headless render mode has been implemented. You can now set HEADLESS as the `renderType` in the Game Config and it will run a special game step that skips rendering. It will still create a Canvas element, as lots of internal systems (like input) rely on it, but it will not draw anything to it. Fix #3256 (thanks @rgk)
+* GameObject.setInteractive has a new boolean argument `dropZone` which will allow you to set the object as being a drop zone right from the method.
+* Sprites can now be drop zones and have other Game Objects dragged onto them as targets.
+* The SceneManager has a new method: `remove` which allows you to remove and destroy a Scene, freeing up the Scene key for use by future scenes and potentially clearing the Scene from active memory for gc.
+
 ### Bug Fixes
+
+* Arcade Physics Bodies didn't apply the results of `allowRotation` to the parent Game Object.
+* InputManager.updateBounds wouldn't correctly get the bounds of the canvas if it had horizontal or vertical translation in the page, causing the scale factor to be off (and subsequently input values to mis-fire)
+* TileSprite.setFrame now works and allows you to change the frame to any other in the texture. Fix #3232 (thanks @Jerenaux)
+* Swapped the queue loop in the SceneManager to to use `_queue.length` rather than a cached length (thanks @srobertson421)
+* When calling `ScenePlugin.launch` the `data` argument is now passed to the queued scenes (thanks @gaudeon)
+* Rectangle.top wouldn't reset the `y` position if the value given never exceed the Rectangles bottom. Fix #3290 (thanks @chancezeus)
+* The implementation of `topOnly` within the Input Manager had broken the way drop zones worked, as they were now filtered out of the display list before processing. Drop zones are now treated on their own in the Input Plugin meaning you can still have `topOnly` set and still drop an item into a drop zone. This indirectly fixed #3291 (thanks @rexrainbow)
+* InputPlugin.clear now properly removes a Game Object from all internal arrays, not just the _list.
+* InputPlugin.processOverOut no longer considers an item as being 'out' if it's in the internal `_drag` array.
+* When a Game Object is scaled, its Arcade Physics body was still calculating its position based on its original size instead of scaled one (thanks @pixelpicosean)
+
 ### Updates
+
+* AnimationComponent.play now calls `setSizeToFrame()` and `updateDisplayOrigin()` on the parent Game Object in order to catch situations where you've started playing an animation on a Game Object that uses a different size to the previously set frame.
+* Text.setText will check if the value given is falsey but not a zero and set to an empty string if so.
+* BitmapText.setText will check if the value given is falsey but not a zero and set to an empty string if so.
+* BitmapText.setText will now cast the given value to a string before setting.
+* BitmapText.setText will not change the text via `setText` unless the new text is different to the old one.
+* If you set `transparent` in the Game Config but didn't provide a `backgroundColor` then it would render as black. It will now be properly transparent. If you do provide a color value then it must include an alpha component.
+* You can now pass normal Groups to Arcade Physics collide / overlap, as well as Physics Groups. Fix #3277 (thanks @nkholski)
+* Texture.get has been optimized to fail first, then error, with a new falsey check. This allows you to skip out specifying animation frames in the animation config without generating a console warning.
+
+* Documentation updates: thanks to @melissaelopez @samme
+
 
 ## Version 3.1.2 - 23rd February 2018
 
