@@ -21,10 +21,7 @@ var WebGLPipeline = require('../WebGLPipeline');
  * @constructor
  * @since 3.0.0
  *
- * @param {Phaser.Game} game - [description]
- * @param {WebGLRenderingContext} gl - [description]
- * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - [description]
- * @param {boolean} overrideFragmentShader - [description]
+ * @param {object} config - [description]
  */
 var TextureTintPipeline = new Class({
 
@@ -36,41 +33,41 @@ var TextureTintPipeline = new Class({
 
     initialize:
 
-    function TextureTintPipeline (game, gl, renderer, overrideFragmentShader)
+    function TextureTintPipeline (config)
     {
         WebGLPipeline.call(this, {
-            game: game,
-            gl: gl,
-            renderer: renderer,
-            topology: gl.TRIANGLES,
-            vertShader: ShaderSourceVS,
-            fragShader: (overrideFragmentShader ? overrideFragmentShader : ShaderSourceFS),
-            vertexCapacity: 6 * 2000,
+            game: config.game,
+            renderer: config.renderer,
+            gl: config.renderer.gl,
+            topology: (config.topology ? config.topology : config.renderer.gl.TRIANGLES),
+            vertShader: (config.vertShader ? config.vertShader : ShaderSourceVS),
+            fragShader: (config.fragShader ? config.fragShader : ShaderSourceFS),
+            vertexCapacity: (config.vertexCapacity ? config.vertexCapacity : 6 * 2000),
 
-            vertexSize:
+            vertexSize: (config.vertexSize ? config.vertexSize :
                 Float32Array.BYTES_PER_ELEMENT * 2 +
                 Float32Array.BYTES_PER_ELEMENT * 2 +
-                Uint8Array.BYTES_PER_ELEMENT * 4,
+                Uint8Array.BYTES_PER_ELEMENT * 4),
 
             attributes: [
                 {
                     name: 'inPosition',
                     size: 2,
-                    type: gl.FLOAT,
+                    type: config.renderer.gl.FLOAT,
                     normalized: false,
                     offset: 0
                 },
                 {
                     name: 'inTexCoord',
                     size: 2,
-                    type: gl.FLOAT,
+                    type: config.renderer.gl.FLOAT,
                     normalized: false,
                     offset: Float32Array.BYTES_PER_ELEMENT * 2
                 },
                 {
                     name: 'inTint',
                     size: 4,
-                    type: gl.UNSIGNED_BYTE,
+                    type: config.renderer.gl.UNSIGNED_BYTE,
                     normalized: true,
                     offset: Float32Array.BYTES_PER_ELEMENT * 4
                 }
@@ -190,6 +187,8 @@ var TextureTintPipeline = new Class({
      *
      * @method Phaser.Renderer.WebGL.TextureTintPipeline#flush
      * @since 3.1.0
+     *
+     * @return {Phaser.Renderer.WebGL.TextureTintPipeline} This Pipeline.
      */
     flush: function ()
     {
@@ -1689,9 +1688,29 @@ var TextureTintPipeline = new Class({
         this.vertexCount += 6;
     },
 
+    /**
+     * Immediately draws a texture with no batching.
+     *
+     * @method Phaser.Renderer.WebGL.TextureTintPipeline#drawTexture
+     * @since 3.2.0
+     *
+     * @param {WebGLTexture} texture [description]
+     * @param {number} srcX - [description]
+     * @param {number} srcY - [description]
+     * @param {number} tint - [description]
+     * @param {number} alpha - [description]
+     * @param {number} frameX - [description]
+     * @param {number} frameY - [description]
+     * @param {number} frameWidth - [description]
+     * @param {number} frameHeight - [description]
+     * @param {Phaser.GameObjects.Components.TransformMatrix} transformMatrix - [description]
+     *
+     * @return {Phaser.Renderer.WebGL.TextureTintPipeline} This Pipeline.
+     */
     drawTexture: function (
         texture,
         srcX, srcY,
+        tint, alpha,
         frameX, frameY, frameWidth, frameHeight,
         transformMatrix
     )
@@ -1733,7 +1752,7 @@ var TextureTintPipeline = new Class({
         var v0 = (frameY / textureHeight);
         var u1 = (frameX + frameWidth) / textureWidth;
         var v1 = (frameY + frameHeight) / textureHeight;
-        var tint = 0xffffffff;
+        tint = Utils.getTintAppendFloatAlpha(tint, alpha);
         
         this.setTexture2D(texture, 0);
 

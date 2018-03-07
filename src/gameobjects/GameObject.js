@@ -320,6 +320,12 @@ var GameObject = new Class({
      */
     destroy: function ()
     {
+        //  This Game Object had already been destroyed
+        if (!this.scene)
+        {
+            return;
+        }
+
         if (this.preDestroy)
         {
             this.preDestroy.call(this);
@@ -357,6 +363,8 @@ var GameObject = new Class({
 
         this.scene = undefined;
 
+        this.emit('destroy');
+                
         this.removeAllListeners();
     }
 
