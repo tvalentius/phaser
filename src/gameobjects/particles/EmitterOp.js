@@ -11,6 +11,84 @@ var GetFastValue = require('../../utils/object/GetFastValue');
 var Wrap = require('../../math/Wrap');
 
 /**
+ * The returned value sets what the property will be at the START of the particle's life, on emit.
+ * @callback EmitterOpOnEmitCallback
+ *
+ * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+ * @param {string} key - The name of the property.
+ * @param {number} value - The current value of the property.
+ *
+ * @return {number} The new value of the property.
+ */
+
+/**
+ * The returned value updates the property for the duration of the particle's life.
+ * @callback EmitterOpOnUpdateCallback
+ *
+ * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+ * @param {string} key - The name of the property.
+ * @param {float} t - The normalized lifetime of the particle, between 0 (start) and 1 (end).
+ * @param {number} value - The current value of the property.
+ *
+ * @return {number} The new value of the property.
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomConfig
+ *
+ * @property {float[]} random - The minimum and maximum values, as [min, max].
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomMinMaxConfig
+ *
+ * @property {float} min - The minimum value.
+ * @property {float} max - The maximum value.
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomStartEndConfig
+ *
+ * @property {float} start - The starting value.
+ * @property {float} end - The ending value.
+ * @property {boolean} random - If false, this becomes {@link EmitterOpEaseConfig}.
+ */
+
+/**
+ * Defines an operation yielding a value incremented continuously across a range.
+ * @typedef {object} EmitterOpEaseConfig
+ *
+ * @property {float} start - The starting value.
+ * @property {float} end - The ending value.
+ * @property {string} [ease='Linear'] - The name of the easing function.
+ */
+
+/**
+ * Defines an operation yielding a value incremented by steps across a range.
+ * @typedef {object} EmitterOpSteppedConfig
+ *
+ * @property {number} start - The starting value.
+ * @property {number} end - The ending value.
+ * @property {number} steps - The number of steps between start and end.
+ */
+
+/**
+ * @typedef {object} EmitterOpCustomEmitConfig
+ *
+ * @property {EmitterOpOnEmitCallback} onEmit - [description]
+ */
+
+/**
+ * @typedef {object} EmitterOpCustomUpdateConfig
+ *
+ * @property {EmitterOpOnEmitCallback} [onEmit] - [description]
+ * @property {EmitterOpOnUpdateCallback} onUpdate - [description]
+ */
+
+/**
  * @classdesc
  * [description]
  *
@@ -30,7 +108,10 @@ var EmitterOp = new Class({
 
     function EmitterOp (config, key, defaultValue, emitOnly)
     {
-        if (emitOnly === undefined) { emitOnly = false; }
+        if (emitOnly === undefined)
+        {
+            emitOnly = false;
+        }
 
         /**
          * [description]
@@ -121,7 +202,7 @@ var EmitterOp = new Class({
          * [description]
          *
          * @name Phaser.GameObjects.Particles.EmitterOp#onEmit
-         * @type {[type]}
+         * @type {EmitterOpOnEmitCallback}
          * @since 3.0.0
          */
         this.onEmit = this.defaultEmit;
@@ -130,7 +211,7 @@ var EmitterOp = new Class({
          * [description]
          *
          * @name Phaser.GameObjects.Particles.EmitterOp#onUpdate
-         * @type {[type]}
+         * @type {EmitterOpOnUpdateCallback}
          * @since 3.0.0
          */
         this.onUpdate = this.defaultUpdate;
@@ -144,19 +225,26 @@ var EmitterOp = new Class({
      * @method Phaser.GameObjects.Particles.EmitterOp#loadConfig
      * @since 3.0.0
      *
-     * @param {object} config - [description]
-     * @param {string} newKey - [description]
+     * @param {object} [config] - [description]
+     * @param {string} [newKey] - [description]
      */
     loadConfig: function (config, newKey)
     {
-        if (config === undefined) { config = {}; }
+        if (config === undefined)
+        {
+            config = {};
+        }
 
         if (newKey)
         {
             this.propertyKey = newKey;
         }
 
-        this.propertyValue = GetFastValue(config, this.propertyKey, this.defaultValue);
+        this.propertyValue = GetFastValue(
+            config,
+            this.propertyKey,
+            this.defaultValue
+        );
 
         this.setMethods();
 
@@ -177,7 +265,7 @@ var EmitterOp = new Class({
      */
     toJSON: function ()
     {
-        return JSON.stringify(this.propertyValue);
+        return this.propertyValue;
     },
 
     /**
@@ -186,7 +274,7 @@ var EmitterOp = new Class({
      * @method Phaser.GameObjects.Particles.EmitterOp#onChange
      * @since 3.0.0
      *
-     * @param {[type]} value - [description]
+     * @param {number} value - [description]
      *
      * @return {Phaser.GameObjects.Particles.EmitterOp} This Emitter Op object.
      */
@@ -209,7 +297,7 @@ var EmitterOp = new Class({
     {
         var value = this.propertyValue;
 
-        var t = typeof(value);
+        var t = typeof value;
 
         if (t === 'number')
         {
@@ -217,7 +305,7 @@ var EmitterOp = new Class({
             //  x: 400
 
             this.onEmit = this.staticValueEmit;
-            this.onUpdate = this.staticValueUpdate;
+            this.onUpdate = this.staticValueUpdate; // How?
         }
         else if (Array.isArray(value))
         {
@@ -249,8 +337,8 @@ var EmitterOp = new Class({
         }
         else if (t === 'object' && (this.has(value, 'random') || this.hasBoth(value, 'start', 'end') || this.hasBoth(value, 'min', 'max')))
         {
-            this.start = (this.has(value, 'start')) ? value.start : value.min;
-            this.end = (this.has(value, 'end')) ? value.end : value.max;
+            this.start = this.has(value, 'start') ? value.start : value.min;
+            this.end = this.has(value, 'end') ? value.end : value.max;
 
             var isRandom = (this.hasBoth(value, 'min', 'max') || this.has(value, 'random'));
 
@@ -291,7 +379,7 @@ var EmitterOp = new Class({
 
                 //  x: { start: 100, end: 400, [ ease: 'Linear' ] }
 
-                var easeType = (this.has(value, 'ease')) ? value.ease : 'Linear';
+                var easeType = this.has(value, 'ease') ? value.ease : 'Linear';
 
                 this.ease = GetEaseFunction(easeType);
 
@@ -299,6 +387,9 @@ var EmitterOp = new Class({
                 {
                     this.onEmit = this.easedValueEmit;
                 }
+
+                //  BUG: alpha, rotate, scaleX, scaleY, or tint are eased here if {min, max} is given.
+                //  Probably this branch should exclude isRandom entirely.
 
                 this.onUpdate = this.easeValueUpdate;
             }
@@ -350,7 +441,7 @@ var EmitterOp = new Class({
      */
     has: function (object, key)
     {
-        return (object.hasOwnProperty(key));
+        return object.hasOwnProperty(key);
     },
 
     /**
@@ -367,7 +458,7 @@ var EmitterOp = new Class({
      */
     hasBoth: function (object, key1, key2)
     {
-        return (object.hasOwnProperty(key1) && object.hasOwnProperty(key2));
+        return object.hasOwnProperty(key1) && object.hasOwnProperty(key2);
     },
 
     /**
@@ -384,7 +475,7 @@ var EmitterOp = new Class({
      */
     hasEither: function (object, key1, key2)
     {
-        return (object.hasOwnProperty(key1) || object.hasOwnProperty(key2));
+        return object.hasOwnProperty(key1) || object.hasOwnProperty(key2);
     },
 
     /**
@@ -498,7 +589,7 @@ var EmitterOp = new Class({
     {
         var current = this.counter;
 
-        var next = this.counter + ((this.end - this.start) / this.steps);
+        var next = this.counter + (this.end - this.start) / this.steps;
 
         this.counter = Wrap(next, this.start, this.end);
 
@@ -547,7 +638,6 @@ var EmitterOp = new Class({
 
         return (data.max - data.min) * this.ease(t) + data.min;
     }
-
 });
 
 module.exports = EmitterOp;

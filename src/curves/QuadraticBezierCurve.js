@@ -19,7 +19,7 @@ var Vector2 = require('../math/Vector2');
  * @constructor
  * @since 3.2.0
  *
- * @param {Phaser.Math.Vector2|Phaser.Math.Vector2[]} p0 - Start point, or an array of point pairs.
+ * @param {(Phaser.Math.Vector2|number[])} p0 - Start point, or an array of point pairs.
  * @param {Phaser.Math.Vector2} p1 - Control Point 1.
  * @param {Phaser.Math.Vector2} p2 - Control Point 2.
  */
@@ -69,14 +69,16 @@ var QuadraticBezier = new Class({
     },
 
     /**
-     * [description]
+     * Gets the starting point on the curve.
      *
      * @method Phaser.Curves.QuadraticBezier#getStartPoint
      * @since 3.2.0
      *
-     * @param {Phaser.Math.Vector2} out - [description]
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
      *
-     * @return {Phaser.Math.Vector2} [description]
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
      */
     getStartPoint: function (out)
     {
@@ -101,15 +103,17 @@ var QuadraticBezier = new Class({
     },
 
     /**
-     * [description]
+     * Get point at relative position in curve according to length.
      *
      * @method Phaser.Curves.QuadraticBezier#getPoint
      * @since 3.2.0
      *
-     * @param {number} t - [description]
-     * @param {Phaser.Math.Vector2} [out] - [description]
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
      *
-     * @return {Phaser.Math.Vector2} [description]
+     * @param {float} t - The position along the curve to return. Where 0 is the start and 1 is the end.
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
      */
     getPoint: function (t, out)
     {
@@ -130,6 +134,8 @@ var QuadraticBezier = new Class({
      *
      * @method Phaser.Curves.QuadraticBezier#draw
      * @since 3.2.0
+     *
+     * @generic {Phaser.GameObjects.Graphics} G - [graphics,$return]
      *
      * @param {Phaser.GameObjects.Graphics} graphics - [description]
      * @param {integer} [pointsTotal=32] - [description]
@@ -162,7 +168,7 @@ var QuadraticBezier = new Class({
      * @method Phaser.Curves.QuadraticBezier#toJSON
      * @since 3.2.0
      *
-     * @return {object} [description]
+     * @return {JSONCurve} The JSON object containing this curve data.
      */
     toJSON: function ()
     {
@@ -178,6 +184,16 @@ var QuadraticBezier = new Class({
 
 });
 
+/**
+ * [description]
+ *
+ * @function Phaser.Curves.QuadraticBezier.fromJSON
+ * @since 3.2.0
+ *
+ * @param {JSONCurve} data - The JSON object containing this curve data.
+ *
+ * @return {Phaser.Curves.QuadraticBezier} [description]
+ */
 QuadraticBezier.fromJSON = function (data)
 {
     var points = data.points;

@@ -17,7 +17,7 @@ var EventEmitter = require('eventemitter3');
  *
  * @class GameObject
  * @memberOf Phaser.GameObjects
- * @extends EventEmitter
+ * @extends Phaser.Events.EventEmitter
  * @constructor
  * @since 3.0.0
  *
@@ -54,6 +54,15 @@ var GameObject = new Class({
          * @since 3.0.0
          */
         this.type = type;
+
+        /**
+         * The parent Container of this Game Object, if it has one.
+         *
+         * @name Phaser.GameObjects.GameObject#parentContainer
+         * @type {Phaser.GameObjects.Container}
+         * @since 3.4.0
+         */
+        this.parentContainer = null;
 
         /**
          * The name of this Game Object.
@@ -139,14 +148,29 @@ var GameObject = new Class({
          * If this Game Object is enabled for physics then this property will contain a reference to a Physics Body.
          *
          * @name Phaser.GameObjects.GameObject#body
-         * @type {?Phaser.Physics.Body}
+         * @type {?(object|Phaser.Physics.Arcade.Body|Phaser.Physics.Impact.Body)}
          * @default null
          * @since 3.0.0
          */
         this.body = null;
 
+        /**
+         * This Game Object will ignore all calls made to its destroy method if this flag is set to `true`.
+         * This includes calls that may come from a Group, Container or the Scene itself.
+         * While it allows you to persist a Game Object across Scenes, please understand you are entirely
+         * responsible for managing references to and from this Game Object.
+         *
+         * @name Phaser.GameObjects.GameObject#ignoreDestroy
+         * @type {boolean}
+         * @default false
+         * @since 3.5.0
+         */
+        this.ignoreDestroy = false;
+
         //  Tell the Scene to re-sort the children
-        this.scene.sys.queueDepthSort();
+        scene.sys.queueDepthSort();
+
+        scene.sys.events.once('shutdown', this.destroy, this);
     },
 
     /**
@@ -157,7 +181,7 @@ var GameObject = new Class({
      * @since 3.0.0
      *
      * @param {boolean} value - True if this Game Object should be set as active, false if not.
-     * 
+     *
      * @return {Phaser.GameObjects.GameObject} This GameObject.
      */
     setActive: function (value)
@@ -175,7 +199,7 @@ var GameObject = new Class({
      * @since 3.0.0
      *
      * @param {string} value - The name to be given to this Game Object.
-     * 
+     *
      * @return {Phaser.GameObjects.GameObject} This GameObject.
      */
     setName: function (value)
@@ -186,10 +210,11 @@ var GameObject = new Class({
     },
 
     /**
-     * [description]
+     * Adds a DataManager to this object.
      *
      * @method Phaser.GameObjects.GameObject#setDataEnabled
      * @since 3.0.0
+     * @see Phaser.Data.DataManager
      *
      * @return {Phaser.GameObjects.GameObject} This GameObject.
      */
@@ -211,8 +236,8 @@ var GameObject = new Class({
      * @since 3.0.0
      *
      * @param {string} key - The key of the property to be stored.
-     * @param {any} value - The value to store with the key. Can be a string, number, array or object.
-     * 
+     * @param {*} value - The value to store with the key. Can be a string, number, array or object.
+     *
      * @return {Phaser.GameObjects.GameObject} This GameObject.
      */
     setData: function (key, value)
@@ -234,8 +259,8 @@ var GameObject = new Class({
      * @since 3.0.0
      *
      * @param {string} key - The key of the property to be retrieved.
-     * 
-     * @return {any} The data, if present in the Data Store.
+     *
+     * @return {*} The data, if present in the Data Store.
      */
     getData: function (key)
     {
@@ -253,15 +278,66 @@ var GameObject = new Class({
      * @method Phaser.GameObjects.GameObject#setInteractive
      * @since 3.0.0
      *
-     * @param {any} [shape] - A geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
-     * @param {function} [callback] - A callback to be invoked when the Game Object is interacted with.
+     * @param {*} [shape] - A geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
+     * @param {HitAreaCallback} [callback] - A callback to be invoked when the Game Object is interacted with. If you provide a shape you must also provide a callback.
      * @param {boolean} [dropZone=false] - Should this Game Object be treated as a drop zone target?
-     * 
+     *
      * @return {Phaser.GameObjects.GameObject} This GameObject.
      */
     setInteractive: function (shape, callback, dropZone)
     {
         this.scene.sys.input.enable(this, shape, callback, dropZone);
+
+        return this;
+    },
+
+    /**
+     * If this Game Object has previously been enabled for input, this will disable it.
+     *
+     * An object that is disabled for input stops processing or being considered for
+     * input events, but can be turned back on again at any time by simply calling
+     * `setInteractive()` with no arguments provided.
+     *
+     * If want to completely remove interaction from this Game Object then use `removeInteractive` instead.
+     *
+     * @method Phaser.GameObjects.GameObject#disableInteractive
+     * @since 3.7.0
+     *
+     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     */
+    disableInteractive: function ()
+    {
+        if (this.input)
+        {
+            this.input.enabled = (this.input.enabled) ? false : true;
+        }
+
+        return this;
+    },
+
+    /**
+     * If this Game Object has previously been enabled for input, this will remove it.
+     *
+     * The Interactive Object that was assigned to this Game Object will be destroyed,
+     * removed from the Input Manager and cleared from this Game Object.
+     *
+     * If you wish to re-enable this Game Object at a later date you will need to
+     * re-create its InteractiveOobject by calling `setInteractive` again.
+     *
+     * If you wish to only temporarily stop an object from receiving input then use
+     * `disableInteractive` instead, as that toggles the interactive state, where-as
+     * this erases it completely.
+     *
+     * @method Phaser.GameObjects.GameObject#removeInteractive
+     * @since 3.7.0
+     *
+     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     */
+    removeInteractive: function ()
+    {
+        this.scene.sys.input.clear(this);
+
+        this.input = undefined;
 
         return this;
     },
@@ -282,7 +358,7 @@ var GameObject = new Class({
      * @method Phaser.GameObjects.GameObject#toJSON
      * @since 3.0.0
      *
-     * @return {object} A JSON representation of the Game Object.
+     * @return {JSONGameObject} A JSON representation of the Game Object.
      */
     toJSON: function ()
     {
@@ -303,15 +379,59 @@ var GameObject = new Class({
     },
 
     /**
+     * Returns an array containing the display list index of either this Game Object, or if it has one,
+     * its parent Container. It then iterates up through all of the parent containers until it hits the
+     * root of the display list (which is index 0 in the returned array).
+     *
+     * Used internally by the InputPlugin but also useful if you wish to find out the display depth of
+     * this Game Object and all of its ancestors.
+     *
+     * @method Phaser.GameObjects.GameObject#getIndexList
+     * @since 3.4.0
+     *
+     * @return {integer[]} An array of display list position indexes.
+     */
+    getIndexList: function ()
+    {
+        // eslint-disable-next-line consistent-this
+        var child = this;
+        var parent = this.parentContainer;
+
+        var indexes = [];
+
+        while (parent)
+        {
+            // indexes.unshift([parent.getIndex(child), parent.name]);
+            indexes.unshift(parent.getIndex(child));
+
+            child = parent;
+
+            if (!parent.parentContainer)
+            {
+                break;
+            }
+            else
+            {
+                parent = parent.parentContainer;
+            }
+        }
+
+        // indexes.unshift([this.scene.sys.displayList.getIndex(child), 'root']);
+        indexes.unshift(this.scene.sys.displayList.getIndex(child));
+
+        return indexes;
+    },
+
+    /**
      * Destroys this Game Object removing it from the Display List and Update List and
      * severing all ties to parent resources.
-     * 
+     *
      * Also removes itself from the Input Manager and Physics Manager if previously enabled.
-     * 
+     *
      * Use this to remove a Game Object from your game if you don't ever plan to use it again.
      * As long as no reference to it exists within your own code it should become free for
      * garbage collection by the browser.
-     * 
+     *
      * If you just want to temporarily disable an object then look at using the
      * Game Object Pool instead of destroying it, as destroyed objects cannot be resurrected.
      *
@@ -321,7 +441,7 @@ var GameObject = new Class({
     destroy: function ()
     {
         //  This Game Object had already been destroyed
-        if (!this.scene)
+        if (!this.scene || this.ignoreDestroy)
         {
             return;
         }
@@ -330,6 +450,8 @@ var GameObject = new Class({
         {
             this.preDestroy.call(this);
         }
+
+        this.emit('destroy', this);
 
         var sys = this.scene.sys;
 
@@ -363,8 +485,8 @@ var GameObject = new Class({
 
         this.scene = undefined;
 
-        this.emit('destroy');
-                
+        this.parentContainer = undefined;
+
         this.removeAllListeners();
     }
 

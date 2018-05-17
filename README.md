@@ -24,9 +24,11 @@ Grab the source and join the fun!
 
 <div align="center"><img src="https://phaser.io/images/github/news.jpg"></div>
 
-> 12th March 2018
+> 16th May 2018
 
-**Updated:** Thank you to everyone who has been trying out Phaser 3 and help us improve it. Today we released version 3.2.1, full of updates and bug fixes. Check out the [Change Log](#changelog) for more details.
+I'm pleased to announce the immediate availability of Phaser 3.8.0. This release continues our mission of enhancing Phaser 3 as best and as quickly as we can. New in this version is a completely overhauled Plugin system, allowing you to add game and Scene level plugins into Phaser with ease, as well as custom Game Objects and File Types too. This continues the work carried out in 3.7.0, in which we made significant improvements to the Loader, allowing for far more flexible file loading, new loader packs, new file formats, normal map support and more. We've also improved our build process, making Phaser 3 much easier to package outside of Webpack. You'll also find hundreds and hundreds of  items now have full documentation too. As always, please check out the [Change Log](#changelog) for comprehensive details about what recent versions contain.
+
+**About Phaser 3**
 
 After 1.5 years in the making, tens of thousands of lines of code, hundreds of examples and countless hours of relentless work: Phaser 3 is finally out. It has been a real labor of love and then some!
 
@@ -68,9 +70,9 @@ Extra special thanks to our top-tier sponsors: [Orange Games](http://orangegames
 
 <div align="center"><img src="https://phaser.io/images/github/phaser-world.png"></div>
 
-Every Monday we publish the [Phaser World](https://phaser.io/community/newsletter) newsletter. It's packed full of the latest Phaser games, tutorials, videos, meet-ups, talks, and more. The newsletter also contains our weekly Development Progress updates which let you know about the new features we're working on.
+Every week we publish the [Phaser World](https://phaser.io/community/newsletter) newsletter. It's packed full of the latest Phaser games, tutorials, videos, meet-ups, talks, and more. The newsletter also contains our weekly Development Progress updates which let you know about the new features we're working on.
 
-Over 100 previous editions can be found on our [Back Issues](http://phaser.io/community/backissues) page.
+Over 120 previous editions can be found on our [Back Issues](https://phaser.io/community/backissues) page.
 
 ![Download Phaser](https://phaser.io/images/github/div-download.png "Download Phaser")
 <a name="download"></a>
@@ -93,17 +95,38 @@ npm install phaser
 
 [![](https://data.jsdelivr.com/v1/package/gh/photonstorm/phaser/badge)](https://www.jsdelivr.com/package/gh/photonstorm/phaser)
 
-[Phaser is on jsDelivr](http://www.jsdelivr.com/projects/phaser) which is a "super-fast CDN for developers". Include the following in your html:
+[Phaser is on jsDelivr](https://www.jsdelivr.com/projects/phaser) which is a "super-fast CDN for developers". Include the following in your html:
 
 ```html
-<script src="//cdn.jsdelivr.net/npm/phaser@3.2.1/dist/phaser.js"></script>
+<script src="//cdn.jsdelivr.net/npm/phaser@3.8.0/dist/phaser.js"></script>
 ```
 
 or the minified version:
 
 ```html
-<script src="//cdn.jsdelivr.net/npm/phaser@3.2.1/dist/phaser.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/phaser@3.8.0/dist/phaser.min.js"></script>
 ```
+
+### API Documentation
+
+1. Go to https://photonstorm.github.io/phaser3-docs/index.html to read the docs online.
+2. Checkout the [phaser3-docs](https://github.com/photonstorm/phaser3-docs) repository and then read the documentation by pointing your browser to the local `docs/` folder.
+
+The documentation for Phaser 3 is an on-going project. Please help us by searching the Phaser code for any instance of the string `[description]` and then replacing it with some documentation.
+
+### TypeScript Definitions
+
+[TypeScript Definitions](https://github.com/photonstorm/phaser3-docs/tree/master/typescript) are now available.
+
+They are automatically generated from the jsdoc comments in the Phaser source code. If you wish to help refine them then you must edit the Phaser jsdoc blocks directly. You can find more details, including the source to the conversion tool we wrote in the Docs repo.
+
+As soon as we're happy with the accuracy of the TS defs we'll merge them into the main repo, for now, please download them from the docs repo, linked above, and add them to your project.
+
+### Webpack
+
+We use Webpack to build Phaser and we take advantage of several features specific to Webpack to do this, including `raw-loader` to handle our shader files and build-time flags for renderer swapping.
+
+If you wish to use Webpack with Phaser then please use our [Phaser 3 Project Template](https://github.com/photonstorm/phaser3-project-template) as it's already set-up to handle the build conditions Phaser needs.
 
 ### License
 
@@ -114,7 +137,7 @@ Phaser is released under the [MIT License](https://opensource.org/licenses/MIT).
 
 <img src="https://phaser.io/images/github/learn.jpg" align="right">
 
-Phaser 3 is so brand new the "paint is still wet", but tutorials and guides are starting to come out!
+Phaser 3 is so new the "paint is still wet", but tutorials and guides are starting to come out!
 
 * [Getting Started with Phaser 3](https://phaser.io/tutorials/getting-started-phaser3) (useful if you are completely new to Phaser)
 * [Making your first Phaser 3 Game](https://phaser.io/tutorials/making-your-first-phaser-3-game)
@@ -124,7 +147,7 @@ Also, please subscribe to the [Phaser World](https://phaser.io/community/newslet
 
 ### Source Code Examples
 
-During our development of Phaser 3, we created hundreds of examples with the full source code and assets. Until these examples are fully integrated into the Phaser website, you can browse them on [Phaser 3 Labs](http://labs.phaser.io), or clone the [examples repo][examples]. Note: Not all examples work, sorry! We're tidying them up as fast as we can.
+During our development of Phaser 3, we created hundreds of examples with the full source code and assets. Until these examples are fully integrated into the Phaser website, you can browse them on [Phaser 3 Labs](https://labs.phaser.io), or clone the [examples repo][examples]. We are constantly adding to and refining these examples.
 
 ### Create Your First Phaser 3 Example
 
@@ -134,7 +157,7 @@ Create an `index.html` page locally and paste the following code into it:
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="http://labs.phaser.io/build/phaser-arcade-physics.min.js"></script> 
+    <script src="https://labs.phaser.io/build/phaser-arcade-physics.min.js"></script> 
 </head>
 <body>
 
@@ -230,7 +253,7 @@ There are both plain and minified compiled versions of Phaser in the `dist` fold
 
 ### Custom Builds
 
-Phaser 3 must be built using Webpack. We take advantage of a number of Webpack features and plugins which allow us to properly tailor the build process. You can elect exactly which features are bundled into your version of Phaser. We will release a tutorial covering the process shortly, but for now please look at our webpack config files to get an idea of the required settings.
+Phaser 3 is built using Webpack and we take advantage of the Webpack definePlugin feature to allow for conditional building of the Canvas and WebGL renderers. As of Phaser 3.7 we have updated our webpack config to make our source far easier to consume in other package managers like Parcel and Electron. Please look our webpack config files to get an idea of the settings we use.
 
 ### Building from Source
 
@@ -241,36 +264,64 @@ You can then run `webpack` to create a development build in the `build` folder w
 ![Change Log](https://phaser.io/images/github/div-change-log.png "Change Log")
 <a name="changelog"></a>
 
-## Version 3.2.1 - 12th March 2018
+## Version 3.8.0 - Klein - 16th May 2018
 
-### Bug Fixes
+### New Plugin Manager
 
-* Fixed issue with Render Texture tinting. Fix #3336 (thanks @rexrainbow)
-* Fixed Utils.String.Format (thanks @samme)
-* The Matter Debug Layer wouldn't clear itself in canvas mode. Fix #3345 (thanks @samid737)
-* TimerEvent.remove would dispatch the Timer event immediately based on the opposite of the method argument, making it behave the opposite of what was expected. It now only fires when requested (thanks @migiyubi)
-* The TileSprite Canvas Renderer did not support rotation, scaling or flipping. Fix #3231 (thanks @TCatshoek)
-* Fixed Group doesn't remove children from Scene when cleared with the `removeFromScene` argument set (thanks @iamchristopher)
-* Fixed an error in the lights pipeline when no Light Manager has been defined (thanks @samme)
-* The ForwardDiffuseLightPipeline now uses `sys.lights` instead of the Scene variable to avoid errors due to injection removal.
-* Phaser.Display.Color.Interpolate would return NaN values because it was loading the wrong Linear function. Fix #3372 (thanks @samid737)
-* RenderTexture.draw was only drawing the base frame of a Texture. Fix #3374 (thanks @samid737)
-* TileSprite scaling differed between WebGL and Canvas. Fix #3338 (thanks @TCatshoek)
-* Text.setFixedSize was incorrectly setting the `text` property instead of the `parent` property. Fix #3375 (thanks @rexrainbow)
-* RenderTexture.clear on canvas was using the last transform state, instead of clearing the whole texture.
+New in this release is a revamped Plugin Manager. Phaser has always used plugins extensively internally but this release opens them up and builds in a lot of new features making them easy for you to both create and digest.
+
+There is a new `Phaser.Plugins` namespace in which the classes live. The functions of the old PluginManager have moved to the new PluginCache and the PluginManager, which is available under `this.plugins` from all Scenes by default, now allows you to install and access any plugin.
+
+Plugins are split into two different types: A Global Plugin and a Scene Plugin.
+
+A **Global Plugin** is a plugin that lives within the Plugin Manager rather than a Scene. You can get access to it by calling `PluginManager.get` and providing a key. Any Scenes that request a plugin in this way all get access to the same plugin instance, allowing you to use a single plugin across multiple Scenes.
+
+A **Scene Plugin** is a plugin dedicated to running within a Scene. These are different to Global Plugins in that their instances do not live within the Plugin Manager, but within the Scene Systems class instead. And that every Scene created is given its own unique instance of a Scene Plugin. Examples of core Scene Plugins include the Input Plugin, the Tween Plugin and the physics Plugins.
+
+Plugins can now be installed in 3 different ways: 1) You can preload them, using the `load.plugin` and the new `load.scenePlugin` methods. This will allow you to load externally hosted plugins into your game, or pull down a plugin dynamically at run-time. 2) You can install global and scene plugins in your Game Configuration. The plugin code can be bundled with your game code into a single bundle. By specifying plugins in the game config they're instantly available as soon as your game boots. Finally, you can install plugins at run-time directly from within a Scene.
+
+Plugins can also create brand new Game Objects and File Types, which install themselves into the respective factories. This means you can now write a plugin that adds a new file type and Game Object in a single package.
+
+The new Plugin Manager and associated classes are 100% covered by JSDocs and there are stacks of new examples in the `plugins` folder in the Phaser 3 Labs too, so please dig in and have a play with these powerful new things!
+
+### New Features
+
+* You can pass in your own `canvas` and `context` elements in your Game Config and Phaser will use those to render with instead of creating its own. This also allows you to pass in a WebGL 2 context. Fix #3653 (thanks @tgrajewski)
+* WebGLRenderer.config has a new property `maxTextures` which is derived from `gl.MAX_TEXTURE_IMAGE_UNITS`, you can get it via the new method `getMaxTextures()`.
+* WebGLRenderer.config has a new property `maxTextureSize` which is derived from `gl.MAX_TEXTURE_SIZE`, you can get it via the new method `getMaxTextureSize()`
+* WebGLRenderer has a new property `compression` which holds the browser / devices compressed texture support gl extensions, which is populated during `init`.
+* When calling `generateFrameNames` to define an animation from a texture atlas you can now leave out all of the config properties and it will create an animation using every frame found in the atlas. Please understand you've no control over the sequence of these frames if you do this and it's entirely dictated by the json data (thanks @Aram19)
+* The keycodes for 0 to 9 on the numeric keypad have been added. You can now use them in events, i.e. `this.input.keyboard.on('keydown_NUMPAD_ZERO')` (thanks @Gaushao)
+* All Game Objects have a new method `setRandomPosition` which will randomly position them anywhere within the defined area, or if no area is given, anywhere within the game size.
 
 ### Updates
 
-* The SceneManager.render will now render a Scene as long as it's in a LOADING state or higher. Before it would only render RUNNING scenes, but this precluded those that were loading assets.
-* A Scene can now be restarted by calling `scene.start()` and providing no arguments (thanks @migiyubi)
-* The class GameObject has now been exposed, available via `Phaser.GameObjects.GameObject` (thanks @rexrainbow)
-* A Camera following a Game Object will now take the zoom factor of the camera into consideration when scrolling. Fix #3353 (thanks @brandonvdongen)
-* Calling `setText` on a BitmapText object will now recalculate its display origin values. Fix #3350 (thanks @migiyubi)
-* You can now pass an object to Loader.atlas, like you you can with images. Fix #3268 (thanks @TCatshoek)
-* The `onContextRestored` callback won't be defined any more unless the WebGL Renderer is in use in the following objects: BitmapMask, Static Tilemap, TileSprite and Text. This should allow those objects to now work in HEADLESS mode. Fix #3368 (thanks @16patsle)
-* The SetFrame method now has two optional arguments: `updateSize` and `updateOrigin` (both true by default) which will update the size and origin of the Game Object respectively. Fix #3339 (thanks @Jerenaux)
+* Game.step now emits a `prestep` event, which some of the global systems hook in to, like Sound and Input. You can use it to perform pre-step tasks, ideally from plugins.
+* Game.step now emits a `step` event. This is emitted once per frame. You can hook into it from plugins or code that exists outside of a Scene.
+* Game.step now emits a `poststep` event. This is the last chance you get to do things before the render process begins.
+* Optimized TextureTintPipeline.drawBlitter so it skips bobs that have alpha of zero and only calls `setTexture2D` if the bob sourceIndex has changed, previously it called it for every single bob.
+* Game.context used to be undefined if running in WebGL. It is now set to be the `WebGLRenderingContext` during WebGLRenderer.init. If you provided your own custom context, it is set to this instead.
+* The Game `onStepCallback` has been removed. You can now listen for the new step events instead.
+* Phaser.EventEmitter was incorrectly namespaced, it's now only available under Phaser.Events.EventEmitter (thanks Tigran)
 
-Please see the complete [Change Log]((https://github.com/photonstorm/phaser/blob/master/CHANGELOG.md)) for previous releases.
+### Bug Fixes
+
+* The Script File type in the Loader didn't create itself correctly as it was missing an argument (thanks @TadejZupancic)
+* The Plugin File type in the Loader didn't create itself correctly as it was missing an argument.
+* WebAudioSoundManager.unlock will now check if `document.body` is available before setting the listeners on it. Fixes old versions of Firefox, apparently. #3649 (thanks @squilibob)
+* Utils.Array.BringToTop failed to move the penultimate item in an array due to an index error. Fix #3658 (thanks @agar3s)
+* The Headless renderer was broken due to an invalid access during TextureSource.init.
+* Animation.yoyo was ignored when calculating the next frame to advance to, breaking the yoyo effect. It now yoyos properly (thanks Tomas)
+* Corrected an error in Container.getBoundsTransformMatrix that called a missing method, causing a `getBounds` on a nested container to fail. Fix #3624 (thanks @poasher)
+* Calling a creator, such as GraphicsCreator, without passing in a config object, would cause an error to be thrown. All Game Object creators now catch against this.
+
+### Examples, Documentation and TypeScript
+
+My thanks to the following for helping with the Phaser 3 Examples, Docs and TypeScript definitions, either by reporting errors, fixing them or helping author the docs:
+
+@samme @mzguimaraes @NaNdreas @Matthew-Herman @melissaelopez @TheColorRed 
+
+Please see the complete [Change Log](https://github.com/photonstorm/phaser/blob/master/CHANGELOG.md) for previous releases.
 
 Looking for a v2 change? Check out the [Phaser CE Change Log](https://github.com/photonstorm/phaser-ce/blob/master/CHANGELOG.md)
 
@@ -301,8 +352,8 @@ All rights reserved.
 
 "Above all, video games are meant to be just one thing: fun. Fun for everyone." - Satoru Iwata
 
-[get-js]: https://github.com/photonstorm/phaser/releases/download/v3.2.1/phaser.js
-[get-minjs]: https://github.com/photonstorm/phaser/releases/download/v3.2.1/phaser.min.js
+[get-js]: https://github.com/photonstorm/phaser/releases/download/v3.8.0/phaser.js
+[get-minjs]: https://github.com/photonstorm/phaser/releases/download/v3.8.0/phaser.min.js
 [clone-http]: https://github.com/photonstorm/phaser.git
 [clone-ssh]: git@github.com:photonstorm/phaser.git
 [clone-ghwin]: github-windows://openRepo/https://github.com/photonstorm/phaser
@@ -311,4 +362,4 @@ All rights reserved.
 [issues]: https://github.com/photonstorm/phaser/issues
 [examples]: https://github.com/photonstorm/phaser3-examples
 [contribute]: https://github.com/photonstorm/phaser/blob/master/.github/CONTRIBUTING.md
-[forum]: http://www.html5gamedevs.com/forum/14-phaser/
+[forum]: http://www.html5gamedevs.com/forum/33-phaser-3/

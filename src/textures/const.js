@@ -5,26 +5,27 @@
  */
 
 /**
- * @namespace Phaser.Textures.FilterMode
+ * Filter Types.
+ *
+ * @name Phaser.Textures.FilterMode
+ * @enum {integer}
+ * @memberOf Phaser.Textures
+ * @readOnly
+ * @since 3.0.0
  */
-
 var CONST = {
 
     /**
-     * CSV Map Type
+     * Linear filter type.
      * 
      * @name Phaser.Textures.FilterMode.LINEAR
-     * @type {number}
-     * @since 3.0.0
      */
     LINEAR: 0,
 
     /**
-     * CSV Map Type
+     * Nearest neighbor filter type.
      * 
      * @name Phaser.Textures.FilterMode.NEAREST
-     * @type {number}
-     * @since 3.0.0
      */
     NEAREST: 1
     

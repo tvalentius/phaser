@@ -7,11 +7,11 @@
 /**
  * Used internally by the KeyboardManager.
  *
- * @function Phaser.Input.Keyboard.Keys.ProcessKeyUp
+ * @function Phaser.Input.Keyboard.ProcessKeyUp
  * @since 3.0.0
  *
  * @param {Phaser.Input.Keyboard.Key} key - [description]
- * @param {[type]} event - [description]
+ * @param {KeyboardEvent} event - [description]
  *
  * @return {Phaser.Input.Keyboard.Key} [description]
  */

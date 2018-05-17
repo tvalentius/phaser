@@ -13,9 +13,11 @@ var Point = require('../point/Point');
  * @function Phaser.Geom.Rectangle.GetPoint
  * @since 3.0.0
  *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
  * @param {Phaser.Geom.Rectangle} rectangle - [description]
  * @param {float} position - [description]
- * @param {Phaser.Geom.Point|object} [out] - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
  *
  * @return {Phaser.Geom.Point} [description]
  */

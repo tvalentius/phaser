@@ -17,11 +17,13 @@ var Point = require('../point/Point');
  * @function Phaser.Geom.Ellipse.GetPoint
  * @since 3.0.0
  *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
  * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the circumference point on.
  * @param {float} position - A value between 0 and 1, where 0 equals 0 degrees, 0.5 equals 180 degrees and 1 equals 360 around the ellipse.
- * @param {Phaser.Geom.Point|object} [out] - An object to store the return values in. If not given a Point object will be created.
+ * @param {(Phaser.Geom.Point|object)} [out] - An object to store the return values in. If not given a Point object will be created.
  *
- * @return {Phaser.Geom.Point|object} A Point, or point-like object, containing the coordinates of the point around the ellipse.
+ * @return {(Phaser.Geom.Point|object)} A Point, or point-like object, containing the coordinates of the point around the ellipse.
  */
 var GetPoint = function (ellipse, position, out)
 {

@@ -11,6 +11,8 @@ var Clone = require('../../utils/object/Clone');
  * JSON format expected to match that defined by Texture Packer, with the frames property containing an array of Frames.
  *
  * @function Phaser.Textures.Parsers.JSONArray
+ * @memberOf Phaser.Textures.Parsers
+ * @private
  * @since 3.0.0
  *
  * @param {Phaser.Textures.Texture} texture - The Texture to add the Frames to.
@@ -24,7 +26,7 @@ var JSONArray = function (texture, sourceIndex, json)
     //  Malformed?
     if (!json['frames'] && !json['textures'])
     {
-        console.warn('Invalid Texture Atlas JSON Array given, missing \'frames\' and \'textures\' array');
+        console.warn('Invalid Texture Atlas JSON Array');
         return;
     }
 

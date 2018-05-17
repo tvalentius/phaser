@@ -12,6 +12,7 @@ var GetTileAt = require('./GetTileAt');
  * internally to optimize recalculating faces when only one tile has been changed.
  *
  * @function Phaser.Tilemaps.Components.CalculateFacesAt
+ * @private
  * @since 3.0.0
  * 
  * @param {integer} tileX - The x coordinate.
@@ -30,7 +31,7 @@ var CalculateFacesAt = function (tileX, tileY, layer)
     // Assume the changed tile has all interesting edges
     if (tileCollides)
     {
-        tile.faceBottom = true;
+        tile.faceTop = true;
         tile.faceBottom = true;
         tile.faceLeft = true;
         tile.faceRight = true;

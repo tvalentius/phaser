@@ -18,8 +18,8 @@ var Class = require('../../utils/Class');
  * @since 3.0.0
  *
  * @param {Phaser.Input.Gamepad.GamepadManager} manager - [description]
- * @param {[type]} id - [description]
- * @param {[type]} index - [description]
+ * @param {string} id - [description]
+ * @param {number} index - [description]
  */
 var Gamepad = new Class({
 
@@ -39,17 +39,8 @@ var Gamepad = new Class({
         /**
          * [description]
          *
-         * @name Phaser.Input.Gamepad.Gamepad#events
-         * @type {[type]}
-         * @since 3.0.0
-         */
-        this.events = manager.events;
-
-        /**
-         * [description]
-         *
          * @name Phaser.Input.Gamepad.Gamepad#id
-         * @type {[type]}
+         * @type {string}
          * @since 3.0.0
          */
         this.id = id;
@@ -58,7 +49,7 @@ var Gamepad = new Class({
          * [description]
          *
          * @name Phaser.Input.Gamepad.Gamepad#index
-         * @type {[type]}
+         * @type {number}
          * @since 3.0.0
          */
         this.index = index;
@@ -87,7 +78,7 @@ var Gamepad = new Class({
          * [description]
          *
          * @name Phaser.Input.Gamepad.Gamepad#buttons
-         * @type {array}
+         * @type {Phaser.Input.Gamepad.Button[]}
          * @default []
          * @since 3.0.0
          */
@@ -97,7 +88,7 @@ var Gamepad = new Class({
          * [description]
          *
          * @name Phaser.Input.Gamepad.Gamepad#axes
-         * @type {array}
+         * @type {Phaser.Input.Gamepad.Axis[]}
          * @default []
          * @since 3.0.0
          */
@@ -110,7 +101,7 @@ var Gamepad = new Class({
      * @method Phaser.Input.Gamepad.Gamepad#update
      * @since 3.0.0
      *
-     * @param {[type]} data - [description]
+     * @param {Gamepad} data - [description]
      */
     update: function (data)
     {
@@ -143,8 +134,10 @@ var Gamepad = new Class({
             {
                 axes[i] = new Axis(this, i);
             }
-
-            axes[i].update(axisData);
+            else
+            {
+                axes[i].update(axisData);
+            }
         }
     }
 

@@ -13,6 +13,7 @@ var CalculateFacesWithin = require('./CalculateFacesWithin');
  * information in the destination region.
  *
  * @function Phaser.Tilemaps.Components.Copy
+ * @private
  * @since 3.0.0
  *
  * @param {integer} srcTileX - [description]
@@ -20,7 +21,6 @@ var CalculateFacesWithin = require('./CalculateFacesWithin');
  * @param {integer} width - [description]
  * @param {integer} height - [description]
  * @param {integer} destTileX - [description]
- * @param {integer} destTileY - [description]
  * @param {integer} destTileY - [description]
  * @param {boolean} [recalculateFaces=true] - [description]
  * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.

@@ -55,10 +55,10 @@ var Polygon = new Class({
      * @method Phaser.Geom.Polygon#contains
      * @since 3.0.0
      *
-     * @param {[type]} x - [description]
-     * @param {[type]} y - [description]
+     * @param {number} x - [description]
+     * @param {number} y - [description]
      *
-     * @return {[type]} [description]
+     * @return {boolean} [description]
      */
     contains: function (x, y)
     {
@@ -80,7 +80,7 @@ var Polygon = new Class({
      * @method Phaser.Geom.Polygon#setTo
      * @since 3.0.0
      *
-     * @param {[type]} points - [description]
+     * @param {array} points - [description]
      *
      * @return {Phaser.Geom.Polygon} This Polygon object.
      */
@@ -94,9 +94,8 @@ var Polygon = new Class({
             return this;
         }
 
-        var entry;
-        var y0 = Number.MAX_VALUE;
         var p;
+        var y0 = Number.MAX_VALUE;
 
         //  The points argument is an array, so iterate through it
         for (var i = 0; i < points.length; i++)
@@ -109,7 +108,7 @@ var Polygon = new Class({
                 p.y = points[i + 1];
                 i++;
             }
-            else if (Array.isArray(entry))
+            else if (Array.isArray(points[i]))
             {
                 //  An array of arrays?
                 p.x = points[i][0];

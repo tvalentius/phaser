@@ -4,8 +4,8 @@
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
 
+var CanvasPool = require('../display/canvas/CanvasPool');
 var Class = require('../utils/Class');
-var CONST = require('../const');
 var IsSizePowerOfTwo = require('../math/pow2/IsSizePowerOfTwo');
 var ScaleModes = require('../renderer/ScaleModes');
 
@@ -22,7 +22,7 @@ var ScaleModes = require('../renderer/ScaleModes');
  * @since 3.0.0
  *
  * @param {Phaser.Textures.Texture} texture - The Texture this TextureSource belongs to.
- * @param {Image|HTMLCanvasElement} source - The source image data.
+ * @param {(HTMLImageElement|HTMLCanvasElement)} source - The source image data.
  * @param {integer} [width] - Optional width of the source image. If not given it's derived from the source itself.
  * @param {integer} [height] - Optional height of the source image. If not given it's derived from the source itself.
  */
@@ -37,6 +37,15 @@ var TextureSource = new Class({
         /**
          * The Texture this TextureSource belongs to.
          *
+         * @name Phaser.Textures.TextureSource#renderer
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
+         * @since 3.7.0
+         */
+        this.renderer = game.renderer;
+
+        /**
+         * The Texture this TextureSource belongs to.
+         *
          * @name Phaser.Textures.TextureSource#texture
          * @type {string}
          * @since 3.0.0
@@ -47,7 +56,7 @@ var TextureSource = new Class({
          * The source image data. This is either an Image Element, or a Canvas Element.
          *
          * @name Phaser.Textures.TextureSource#image
-         * @type {Image|HTMLCanvasElement}
+         * @type {(HTMLImageElement|HTMLCanvasElement)}
          * @since 3.0.0
          */
         this.image = source;
@@ -97,7 +106,7 @@ var TextureSource = new Class({
          * Either Linear or Nearest.
          *
          * @name Phaser.Textures.TextureSource#scaleMode
-         * @type {[type]}
+         * @type {number}
          * @since 3.0.0
          */
         this.scaleMode = ScaleModes.DEFAULT;
@@ -124,7 +133,7 @@ var TextureSource = new Class({
          * The WebGL Texture of the source image.
          *
          * @name Phaser.Textures.TextureSource#glTexture
-         * @type {?[type]}
+         * @type {?WebGLTexture}
          * @default null
          * @since 3.0.0
          */
@@ -143,9 +152,16 @@ var TextureSource = new Class({
      */
     init: function (game)
     {
-        if (game.config.renderType === CONST.WEBGL)
+        if (this.renderer && this.renderer.gl)
         {
-            this.glTexture = game.renderer.createTextureFromSource(this.image, this.width, this.height, this.scaleMode);
+            if (this.isCanvas)
+            {
+                this.glTexture = this.renderer.canvasToTexture(this.image);
+            }
+            else
+            {
+                this.glTexture = this.renderer.createTextureFromSource(this.image, this.width, this.height, this.scaleMode);
+            }
         }
 
         if (game.config.pixelArt)
@@ -164,28 +180,51 @@ var TextureSource = new Class({
      * @method Phaser.Textures.TextureSource#setFilter
      * @since 3.0.0
      *
-     * @param {Phaser.Textures.FilterMode.LINEAR|Phaser.Textures.FilterMode.NEAREST} filterMode - The Filter Mode.
+     * @param {Phaser.Textures.FilterMode} filterMode - The Filter Mode.
      */
     setFilter: function (filterMode)
     {
-        var game = this.texture.manager.game;
-
-        if (game.config.renderType === CONST.WEBGL)
+        if (this.renderer.gl)
         {
-            game.renderer.setTextureFilter(this.glTexture, filterMode);
+            this.renderer.setTextureFilter(this.glTexture, filterMode);
         }
     },
 
     /**
-     * Destroys this Texture Source and nulls the source image reference.
+     * If this TextureSource is backed by a Canvas and is running under WebGL,
+     * it updates the WebGLTexture using the canvas data.
+     *
+     * @method Phaser.Textures.TextureSource#update
+     * @since 3.7.0
+     */
+    update: function ()
+    {
+        if (this.renderer.gl && this.isCanvas)
+        {
+            this.renderer.canvasToTexture(this.image, this.glTexture);
+        }
+    },
+
+    /**
+     * Destroys this Texture Source and nulls the references.
      *
      * @method Phaser.Textures.TextureSource#destroy
      * @since 3.0.0
      */
     destroy: function ()
     {
-        this.texture = null;
+        if (this.glTexture)
+        {
+            this.renderer.deleteTexture(this.glTexture);
+        }
 
+        if (this.isCanvas)
+        {
+            CanvasPool.remove(this.image);
+        }
+
+        this.renderer = null;
+        this.texture = null;
         this.image = null;
     }
 

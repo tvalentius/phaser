@@ -16,10 +16,12 @@ var Point = require('../point/Point');
  * @function Phaser.Geom.Triangle.Centroid
  * @since 3.0.0
  *
- * @param {Phaser.Geom.Triangle} triangle - [description]
- * @param {Phaser.Geom.Point|object} [out] - [description]
+ * @generic {Phaser.Geom.Point} O - [out,$return]
  *
- * @return {Phaser.Geom.Point|object} [description]
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {(Phaser.Geom.Point|object)} [description]
  */
 var Centroid = function (triangle, out)
 {

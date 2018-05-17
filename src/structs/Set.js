@@ -7,6 +7,16 @@
 var Class = require('../utils/Class');
 
 /**
+ * @callback EachSetCallback
+ * @generic E - [entry]
+ *
+ * @param {*} entry - [description]
+ * @param {number} index - [description]
+ *
+ * @return {?boolean} [description]
+ */
+
+/**
  * @classdesc
  * A Set is a collection of unique elements.
  *
@@ -15,7 +25,10 @@ var Class = require('../utils/Class');
  * @constructor
  * @since 3.0.0
  *
- * @param {array} [elements] - [description]
+ * @generic T
+ * @genericUse {T[]} - [elements]
+ *
+ * @param {Array.<*>} [elements] - [description]
  */
 var Set = new Class({
 
@@ -26,8 +39,10 @@ var Set = new Class({
         /**
          * [description]
          *
+         * @genericUse {T[]} - [$type]
+         *
          * @name Phaser.Structs.Set#entries
-         * @type {array}
+         * @type {Array.<*>}
          * @default []
          * @since 3.0.0
          */
@@ -48,7 +63,10 @@ var Set = new Class({
      * @method Phaser.Structs.Set#set
      * @since 3.0.0
      *
-     * @param {any} value - [description]
+     * @genericUse {T} - [value]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {*} value - [description]
      *
      * @return {Phaser.Structs.Set} This Set object.
      */
@@ -68,10 +86,12 @@ var Set = new Class({
      * @method Phaser.Structs.Set#get
      * @since 3.0.0
      *
-     * @param {string} property - [description]
-     * @param {any} value - [description]
+     * @genericUse {T} - [value,$return]
      *
-     * @return {any} [description]
+     * @param {string} property - [description]
+     * @param {*} value - [description]
+     *
+     * @return {*} [description]
      */
     get: function (property, value)
     {
@@ -92,7 +112,9 @@ var Set = new Class({
      * @method Phaser.Structs.Set#getArray
      * @since 3.0.0
      *
-     * @return {array} [description]
+     * @genericUse {T[]} - [$return]
+     *
+     * @return {Array.<*>} [description]
      */
     getArray: function ()
     {
@@ -105,7 +127,10 @@ var Set = new Class({
      * @method Phaser.Structs.Set#delete
      * @since 3.0.0
      *
-     * @param {any} value - [description]
+     * @genericUse {T} - [value]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {*} value - [description]
      *
      * @return {Phaser.Structs.Set} This Set object.
      */
@@ -148,8 +173,11 @@ var Set = new Class({
      * @method Phaser.Structs.Set#each
      * @since 3.0.0
      *
-     * @param {function} callback - [description]
-     * @param {object} callbackScope - [description]
+     * @genericUse {EachSetCallback.<T>} - [callback]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {EachSetCallback} callback - [description]
+     * @param {*} callbackScope - [description]
      *
      * @return {Phaser.Structs.Set} This Set object.
      */
@@ -189,8 +217,11 @@ var Set = new Class({
      * @method Phaser.Structs.Set#iterate
      * @since 3.0.0
      *
-     * @param {function} callback - [description]
-     * @param {object} callbackScope - [description]
+     * @genericUse {EachSetCallback.<T>} - [callback]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {EachSetCallback} callback - [description]
+     * @param {*} callbackScope - [description]
      *
      * @return {Phaser.Structs.Set} This Set object.
      */
@@ -229,8 +260,10 @@ var Set = new Class({
      * @method Phaser.Structs.Set#iterateLocal
      * @since 3.0.0
      *
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
      * @param {string} callbackKey - [description]
-     * @param {...*} [arguments] - Additional arguments that will be passed to the callback, after the child.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
      *
      * @return {Phaser.Structs.Set} This Set object.
      */
@@ -262,6 +295,8 @@ var Set = new Class({
      * @method Phaser.Structs.Set#clear
      * @since 3.0.0
      *
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
      * @return {Phaser.Structs.Set} This Set object.
      */
     clear: function ()
@@ -277,7 +312,9 @@ var Set = new Class({
      * @method Phaser.Structs.Set#contains
      * @since 3.0.0
      *
-     * @param {any} value - [description]
+     * @genericUse {T} - [value]
+     *
+     * @param {*} value - [description]
      *
      * @return {boolean} [description]
      */
@@ -291,6 +328,8 @@ var Set = new Class({
      *
      * @method Phaser.Structs.Set#union
      * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.Set.<T>} - [set,$return]
      *
      * @param {Phaser.Structs.Set} set - [description]
      *
@@ -319,6 +358,8 @@ var Set = new Class({
      * @method Phaser.Structs.Set#intersect
      * @since 3.0.0
      *
+     * @genericUse {Phaser.Structs.Set.<T>} - [set,$return]
+     *
      * @param {Phaser.Structs.Set} set - [description]
      *
      * @return {Phaser.Structs.Set} [description]
@@ -343,6 +384,8 @@ var Set = new Class({
      *
      * @method Phaser.Structs.Set#difference
      * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.Set.<T>} - [set,$return]
      *
      * @param {Phaser.Structs.Set} set - [description]
      *

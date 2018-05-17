@@ -27,6 +27,7 @@ var TileSpriteRender = require('./TileSpriteRender');
  * @extends Phaser.GameObjects.Components.Depth
  * @extends Phaser.GameObjects.Components.Flip
  * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
  * @extends Phaser.GameObjects.Components.Origin
  * @extends Phaser.GameObjects.Components.Pipeline
  * @extends Phaser.GameObjects.Components.ScaleMode
@@ -43,7 +44,7 @@ var TileSpriteRender = require('./TileSpriteRender');
  * @param {number} width - The width of the Game Object.
  * @param {number} height - The height of the Game Object.
  * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
- * @param {string|integer} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
  */
 var TileSprite = new Class({
 
@@ -55,6 +56,7 @@ var TileSprite = new Class({
         Components.Depth,
         Components.Flip,
         Components.GetBounds,
+        Components.Mask,
         Components.Origin,
         Components.Pipeline,
         Components.ScaleMode,
@@ -109,7 +111,7 @@ var TileSprite = new Class({
          * [description]
          *
          * @name Phaser.GameObjects.TileSprite#tileTexture
-         * @type {?[type]}
+         * @type {?WebGLTexture}
          * @default null
          * @since 3.0.0
          */
@@ -119,7 +121,7 @@ var TileSprite = new Class({
          * [description]
          *
          * @name Phaser.GameObjects.TileSprite#renderer
-         * @type {[type]}
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
          * @since 3.0.0
          */
         this.renderer = renderer;
@@ -165,7 +167,7 @@ var TileSprite = new Class({
          * @type {HTMLCanvasElement}
          * @since 3.0.0
          */
-        this.canvasBuffer = CanvasPool.create2D(null, this.potWidth, this.potHeight);
+        this.canvasBuffer = CanvasPool.create2D(this, this.potWidth, this.potHeight);
 
         /**
          * [description]
@@ -191,6 +193,32 @@ var TileSprite = new Class({
                 this.tileTexture = renderer.createTexture2D(0, gl.LINEAR, gl.LINEAR, gl.REPEAT, gl.REPEAT, gl.RGBA, this.canvasBuffer, this.potWidth, this.potHeight);
             }, this);
         }
+    },
+
+    /**
+     * Sets {@link Phaser.GameObjects.TileSprite#tilePositionX} and {@link Phaser.GameObjects.TileSprite#tilePositionY}.
+     *
+     * @method Phaser.GameObjects.TileSprite#setTilePosition
+     * @since 3.3.0
+     *
+     * @param {number} [x] - The x position of this sprite's tiling texture.
+     * @param {number} [y] - The y position of this sprite's tiling texture.
+     *
+     * @return {Phaser.GameObjects.TileSprite} This Tile Sprite instance.
+     */
+    setTilePosition: function (x, y)
+    {
+        if (x !== undefined)
+        {
+            this.tilePositionX = x;
+        }
+
+        if (y !== undefined)
+        {
+            this.tilePositionY = y;
+        }
+
+        return this;
     },
 
     /**
@@ -220,7 +248,7 @@ var TileSprite = new Class({
                 this.potWidth, this.potHeight
             );
 
-            this.tileTexture = this.renderer.canvasToTexture(this.canvasBuffer, this.tileTexture, (this.tileTexture === null), this.scaleMode);
+            this.tileTexture = this.renderer.canvasToTexture(this.canvasBuffer, this.tileTexture);
         }
         else
         {
@@ -248,7 +276,7 @@ var TileSprite = new Class({
      */
     destroy: function ()
     {
-        if (this.renderer)
+        if (this.renderer.gl)
         {
             this.renderer.deleteTexture(this.tileTexture);
         }

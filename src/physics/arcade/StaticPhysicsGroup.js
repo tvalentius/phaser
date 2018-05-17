@@ -24,7 +24,7 @@ var Group = require('../../gameobjects/group/Group');
  * @param {Phaser.Physics.Arcade.World} world - [description]
  * @param {Phaser.Scene} scene - [description]
  * @param {array} children - [description]
- * @param {object} config - [description]
+ * @param {GroupConfig} config - [description]
  */
 var StaticPhysicsGroup = new Class({
 
@@ -53,9 +53,9 @@ var StaticPhysicsGroup = new Class({
          */
         this.world = world;
 
-        config.createCallback = this.createCallback;
-        config.removeCallback = this.removeCallback;
-        config.createMultipleCallback = this.createMultipleCallback;
+        config.createCallback = this.createCallbackHandler;
+        config.removeCallback = this.removeCallbackHandler;
+        config.createMultipleCallback = this.createMultipleCallbackHandler;
 
         config.classType = ArcadeSprite;
 
@@ -74,12 +74,12 @@ var StaticPhysicsGroup = new Class({
     /**
      * [description]
      *
-     * @method Phaser.Physics.Arcade.StaticGroup#createCallback
+     * @method Phaser.Physics.Arcade.StaticGroup#createCallbackHandler
      * @since 3.0.0
      *
      * @param {Phaser.GameObjects.GameObject} child - [description]
      */
-    createCallback: function (child)
+    createCallbackHandler: function (child)
     {
         if (!child.body)
         {
@@ -90,12 +90,12 @@ var StaticPhysicsGroup = new Class({
     /**
      * [description]
      *
-     * @method Phaser.Physics.Arcade.StaticGroup#removeCallback
+     * @method Phaser.Physics.Arcade.StaticGroup#removeCallbackHandler
      * @since 3.0.0
      *
      * @param {Phaser.GameObjects.GameObject} child - [description]
      */
-    removeCallback: function (child)
+    removeCallbackHandler: function (child)
     {
         if (child.body)
         {
@@ -106,12 +106,12 @@ var StaticPhysicsGroup = new Class({
     /**
      * [description]
      *
-     * @method Phaser.Physics.Arcade.StaticGroup#createMultipleCallback
+     * @method Phaser.Physics.Arcade.StaticGroup#createMultipleCallbackHandler
      * @since 3.0.0
      *
      * @param {object} entries - [description]
      */
-    createMultipleCallback: function ()
+    createMultipleCallbackHandler: function ()
     {
         this.refresh();
     },

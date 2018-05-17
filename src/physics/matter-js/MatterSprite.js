@@ -5,7 +5,6 @@
  */
 
 var AnimationComponent = require('../../gameobjects/components/Animation');
-var Bodies = require('./lib/factory/Bodies');
 var Class = require('../../utils/Class');
 var Components = require('./components');
 var GameObject = require('../../gameobjects/GameObject');
@@ -26,7 +25,7 @@ var Vector2 = require('../../math/Vector2');
  * As such, Sprites take a fraction longer to process and have a larger API footprint due to the Animation
  * Component. If you do not require animation then you can safely use Images to replace Sprites in all cases.
  *
- * @class MatterSprite
+ * @class Sprite
  * @extends Phaser.GameObjects.Sprite
  * @memberOf Phaser.Physics.Matter
  * @constructor
@@ -45,7 +44,6 @@ var Vector2 = require('../../math/Vector2');
  * @extends Phaser.Physics.Matter.Components.Transform
  * @extends Phaser.Physics.Matter.Components.Velocity
  * @extends Phaser.GameObjects.Components.Alpha
- * @extends Phaser.GameObjects.Components.Animation
  * @extends Phaser.GameObjects.Components.BlendMode
  * @extends Phaser.GameObjects.Components.Depth
  * @extends Phaser.GameObjects.Components.Flip
@@ -64,8 +62,8 @@ var Vector2 = require('../../math/Vector2');
  * @param {number} x - The horizontal position of this Game Object in the world.
  * @param {number} y - The vertical position of this Game Object in the world.
  * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
- * @param {string|integer} [frame] - An optional frame from the Texture this Game Object is rendering with.
- * @param {object} options - [description]
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * @param {object} [options={}] - Matter.js configuration object.
  */
 var MatterSprite = new Class({
 
@@ -99,26 +97,34 @@ var MatterSprite = new Class({
         this.setSizeToFrame();
         this.setOrigin();
 
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Matter.Sprite#world
+         * @type {Phaser.Physics.Matter.World}
+         * @since 3.0.0
+         */
         this.world = world;
 
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Matter.Sprite#_tempVec2
+         * @type {Phaser.Math.Vector2}
+         * @private
+         * @since 3.0.0
+         */
         this._tempVec2 = new Vector2(x, y);
 
         var shape = GetFastValue(options, 'shape', null);
 
-        if (!shape)
+        if (shape)
         {
-            this.body = Bodies.rectangle(x, y, this.width, this.height, options);
-
-            this.body.gameObject = this;
-
-            if (GetFastValue(options, 'addToWorld', true))
-            {
-                world.add(this.body);
-            }
+            this.setBody(shape, options);
         }
         else
         {
-            this.setBody(shape, options);
+            this.setRectangle(this.width, this.height, options);
         }
 
         this.setPosition(x, y);

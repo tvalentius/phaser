@@ -4,10 +4,9 @@
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
 
-//  Phaser.Physics.Matter.World
-
 var Bodies = require('./lib/factory/Bodies');
 var Class = require('../../utils/Class');
+var Common = require('./lib/core/Common');
 var Composite = require('./lib/body/Composite');
 var Engine = require('./lib/core/Engine');
 var EventEmitter = require('eventemitter3');
@@ -15,15 +14,16 @@ var GetFastValue = require('../../utils/object/GetFastValue');
 var GetValue = require('../../utils/object/GetValue');
 var MatterBody = require('./lib/body/Body');
 var MatterEvents = require('./lib/core/Events');
-var MatterWorld = require('./lib/body/World');
 var MatterTileBody = require('./MatterTileBody');
+var MatterWorld = require('./lib/body/World');
+var Vector = require('./lib/geometry/Vector');
 
 /**
  * @classdesc
  * [description]
  *
  * @class World
- * @extends EventEmitter
+ * @extends Phaser.Events.EventEmitter
  * @memberOf Phaser.Physics.Matter
  * @constructor
  * @since 3.0.0
@@ -54,16 +54,16 @@ var World = new Class({
          * [description]
          *
          * @name Phaser.Physics.Matter.World#engine
-         * @type {[type]}
+         * @type {MatterJS.Engine}
          * @since 3.0.0
          */
         this.engine = Engine.create(config);
 
         /**
-         * [description]
+         * A `World` composite object that will contain all simulated bodies and constraints.
          *
          * @name Phaser.Physics.Matter.World#localWorld
-         * @type {[type]}
+         * @type {MatterJS.World}
          * @since 3.0.0
          */
         this.localWorld = this.engine.world;
@@ -79,7 +79,7 @@ var World = new Class({
          * An object containing the 4 wall bodies that bound the physics world.
          *
          * @name Phaser.Physics.Matter.World#walls
-         * @type {[type]}
+         * @type {object}
          * @since 3.0.0
          */
         this.walls = { left: null, right: null, top: null, bottom: null };
@@ -119,6 +119,62 @@ var World = new Class({
         this.enabled = GetValue(config, 'enabled', true);
 
         /**
+         * The correction argument is an optional Number that specifies the time correction factor to apply to the update.
+         * This can help improve the accuracy of the simulation in cases where delta is changing between updates.
+         * The value of correction is defined as delta / lastDelta, i.e. the percentage change of delta over the last step.
+         * Therefore the value is always 1 (no correction) when delta constant (or when no correction is desired, which is the default).
+         * See the paper on Time Corrected Verlet for more information.
+         *
+         * @name Phaser.Physics.Matter.World#correction
+         * @type {number}
+         * @default 1
+         * @since 3.4.0
+         */
+        this.correction = GetValue(config, 'correction', 1);
+
+        /**
+         * This function is called every time the core game loop steps, which is bound to the
+         * Request Animation Frame frequency unless otherwise modified.
+         * 
+         * The function is passed two values: `time` and `delta`, both of which come from the game step values.
+         * 
+         * It must return a number. This number is used as the delta value passed to Matter.Engine.update.
+         * 
+         * You can override this function with your own to define your own timestep.
+         * 
+         * If you need to update the Engine multiple times in a single game step then call
+         * `World.update` as many times as required. Each call will trigger the `getDelta` function.
+         * If you wish to have full control over when the Engine updates then see the property `autoUpdate`.
+         *
+         * You can also adjust the number of iterations that Engine.update performs.
+         * Use the Scene Matter Physics config object to set the following properties:
+         *
+         * positionIterations (defaults to 6)
+         * velocityIterations (defaults to 4)
+         * constraintIterations (defaults to 2)
+         *
+         * Adjusting these values can help performance in certain situations, depending on the physics requirements
+         * of your game.
+         *
+         * @name Phaser.Physics.Matter.World#getDelta
+         * @type {function}
+         * @since 3.4.0
+         */
+        this.getDelta = GetValue(config, 'getDelta', this.update60Hz);
+
+        /**
+         * Automatically call Engine.update every time the game steps.
+         * If you disable this then you are responsible for calling `World.step` directly from your game.
+         * If you call `set60Hz` or `set30Hz` then `autoUpdate` is reset to `true`.
+         *
+         * @name Phaser.Physics.Matter.World#autoUpdate
+         * @type {boolean}
+         * @default true
+         * @since 3.4.0
+         */
+        this.autoUpdate = GetValue(config, 'autoUpdate', true);
+
+        /**
          * [description]
          *
          * @name Phaser.Physics.Matter.World#drawDebug
@@ -150,7 +206,9 @@ var World = new Class({
             debugShowVelocity: GetValue(config, 'debugShowVelocity', true),
             bodyDebugColor: GetValue(config, 'debugBodyColor', 0xff00ff),
             staticBodyDebugColor: GetValue(config, 'debugBodyColor', 0x0000ff),
-            velocityDebugColor: GetValue(config, 'debugVelocityColor', 0x00ff00)
+            velocityDebugColor: GetValue(config, 'debugVelocityColor', 0x00ff00),
+            debugShowJoint: GetValue(config, 'debugShowJoint', true),
+            jointDebugColor: GetValue(config, 'debugJointColor', 0x000000)
         };
 
         if (this.drawDebug)
@@ -174,21 +232,16 @@ var World = new Class({
 
         MatterEvents.on(engine, 'beforeUpdate', function (event)
         {
-
             _this.emit('beforeupdate', event);
-
         });
 
         MatterEvents.on(engine, 'afterUpdate', function (event)
         {
-
             _this.emit('afterupdate', event);
-
         });
 
         MatterEvents.on(engine, 'collisionStart', function (event)
         {
-
             var pairs = event.pairs;
             var bodyA;
             var bodyB;
@@ -200,12 +253,10 @@ var World = new Class({
             }
 
             _this.emit('collisionstart', event, bodyA, bodyB);
-
         });
 
         MatterEvents.on(engine, 'collisionActive', function (event)
         {
-
             var pairs = event.pairs;
             var bodyA;
             var bodyB;
@@ -217,12 +268,10 @@ var World = new Class({
             }
 
             _this.emit('collisionactive', event, bodyA, bodyB);
-
         });
 
         MatterEvents.on(engine, 'collisionEnd', function (event)
         {
-
             var pairs = event.pairs;
             var bodyA;
             var bodyB;
@@ -234,7 +283,6 @@ var World = new Class({
             }
 
             _this.emit('collisionend', event, bodyA, bodyB);
-
         });
     },
 
@@ -249,10 +297,10 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#setBounds
      * @since 3.0.0
      *
-     * @param {number} x - The x coordinate of the top-left corner of the bounds.
-     * @param {number} y - The y coordinate of the top-left corner of the bounds.
-     * @param {number} width - The width of the bounds.
-     * @param {number} height - The height of the bounds.
+     * @param {number} [x=0] - The x coordinate of the top-left corner of the bounds.
+     * @param {number} [y=0] - The y coordinate of the top-left corner of the bounds.
+     * @param {number} [width] - The width of the bounds.
+     * @param {number} [height] - The height of the bounds.
      * @param {number} [thickness=128] - The thickness of each wall, in pixels.
      * @param {boolean} [left=true] - If true will create the left bounds wall.
      * @param {boolean} [right=true] - If true will create the right bounds wall.
@@ -288,12 +336,12 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#updateWall
      * @since 3.0.0
      *
-     * @param {[type]} add - [description]
-     * @param {[type]} position - [description]
-     * @param {[type]} x - [description]
-     * @param {[type]} y - [description]
-     * @param {[type]} width - [description]
-     * @param {[type]} height - [description]
+     * @param {boolean} add - [description]
+     * @param {string} position - [description]
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} width - [description]
+     * @param {number} height - [description]
      */
     updateWall: function (add, position, x, y, width, height)
     {
@@ -335,7 +383,7 @@ var World = new Class({
     {
         var graphic = this.scene.sys.add.graphics({ x: 0, y: 0 });
 
-        graphic.setZ(Number.MAX_VALUE);
+        graphic.setDepth(Number.MAX_VALUE);
 
         this.debugGraphic = graphic;
 
@@ -368,7 +416,7 @@ var World = new Class({
      * @since 3.0.0
      *
      * @param {number} [x=0] - [description]
-     * @param {number} [y] - [description]
+     * @param {number} [y=1] - [description]
      * @param {number} [scale] - [description]
      *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
@@ -395,13 +443,13 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#create
      * @since 3.0.0
      *
-     * @param {[type]} x - [description]
-     * @param {[type]} y - [description]
-     * @param {[type]} width - [description]
-     * @param {[type]} height - [description]
-     * @param {[type]} options - [description]
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} width - [description]
+     * @param {number} height - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {MatterJS.Body} [description]
      */
     create: function (x, y, width, height, options)
     {
@@ -412,14 +460,13 @@ var World = new Class({
         return body;
     },
 
-    //  object can be single or an array, and can be a body, composite or constraint
     /**
      * [description]
      *
      * @method Phaser.Physics.Matter.World#add
      * @since 3.0.0
      *
-     * @param {[type]} object - [description]
+     * @param {(object|object[])} object - Can be single or an array, and can be a body, composite or constraint
      *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
      */
@@ -436,7 +483,7 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#remove
      * @since 3.0.0
      *
-     * @param {[type]} object - [description]
+     * @param {object} object - The object to be removed from the world.
      * @param {boolean} deep - [description]
      *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
@@ -456,7 +503,7 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#removeConstraint
      * @since 3.0.0
      *
-     * @param {[type]} constraint - [description]
+     * @param {MatterJS.Constraint} constraint - [description]
      * @param {boolean} deep - [description]
      *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
@@ -475,11 +522,10 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#convertTilemapLayer
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.StaticTilemapLayer|Phaser.GameObjects.DynamicTilemapLayer} tiles -
+     * @param {(Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} tilemapLayer -
      * An array of tiles.
-     * @param {object} [options] - Options to be passed to the MatterTileBody constructor. See
-     * Phaser.Physics.Matter.TileBody.
-     * 
+     * @param {object} [options] - Options to be passed to the MatterTileBody constructor. {@ee Phaser.Physics.Matter.TileBody}
+     *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
      */
     convertTilemapLayer: function (tilemapLayer, options)
@@ -499,10 +545,9 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#convertTiles
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.Tile[]} tiles - An array of tiles.
-     * @param {object} [options] - Options to be passed to the MatterTileBody constructor. See
-     * Phaser.Physics.Matter.TileBody.
-     * 
+     * @param {Phaser.Tilemaps.Tile[]} tiles - An array of tiles.
+     * @param {object} [options] - Options to be passed to the MatterTileBody constructor. {@see Phaser.Physics.Matter.TileBody}
+     *
      * @return {Phaser.Physics.Matter.World} This Matter World object.
      */
     convertTiles: function (tiles, options)
@@ -526,9 +571,9 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#nextGroup
      * @since 3.0.0
      *
-     * @param {[type]} isNonColliding - [description]
+     * @param {boolean} isNonColliding - [description]
      *
-     * @return {[type]} [description]
+     * @return {number} [description]
      */
     nextGroup: function (isNonColliding)
     {
@@ -541,7 +586,7 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#nextCategory
      * @since 3.0.0
      *
-     * @return {[type]} [description]
+     * @return {number} [description]
      */
     nextCategory: function ()
     {
@@ -593,12 +638,68 @@ var World = new Class({
      */
     update: function (time, delta)
     {
-        if (this.enabled)
+        if (this.enabled && this.autoUpdate)
         {
-            var correction = 1;
-
-            Engine.update(this.engine, delta, correction);
+            Engine.update(this.engine, this.getDelta(time, delta), this.correction);
         }
+    },
+
+    /**
+     * Manually advances the physics simulation by one iteration.
+     * 
+     * You can optionally pass in the `delta` and `correction` values to be used by Engine.update.
+     * If undefined they use the Matter defaults of 60Hz and no correction.
+     * 
+     * Calling `step` directly bypasses any checks of `enabled` or `autoUpdate`.
+     * 
+     * It also ignores any custom `getDelta` functions, as you should be passing the delta
+     * value in to this call.
+     *
+     * You can adjust the number of iterations that Engine.update performs internally.
+     * Use the Scene Matter Physics config object to set the following properties:
+     *
+     * positionIterations (defaults to 6)
+     * velocityIterations (defaults to 4)
+     * constraintIterations (defaults to 2)
+     *
+     * Adjusting these values can help performance in certain situations, depending on the physics requirements
+     * of your game.
+     *
+     * @method Phaser.Physics.Matter.World#step
+     * @since 3.4.0
+     *
+     * @param {number} [delta=16.666] - [description]
+     * @param {number} [correction=1] - [description]
+     */
+    step: function (delta, correction)
+    {
+        Engine.update(this.engine, delta, correction);
+    },
+
+    /**
+     * Runs the Matter Engine.update at a fixed timestep of 60Hz.
+     *
+     * @method Phaser.Physics.Matter.World#update60Hz
+     * @since 3.4.0
+     *
+     * @return {number} The delta value to be passed to Engine.update.
+     */
+    update60Hz: function ()
+    {
+        return 1000 / 60;
+    },
+
+    /**
+     * Runs the Matter Engine.update at a fixed timestep of 30Hz.
+     *
+     * @method Phaser.Physics.Matter.World#update30Hz
+     * @since 3.4.0
+     *
+     * @return {number} The delta value to be passed to Engine.update.
+     */
+    update30Hz: function ()
+    {
+        return 1000 / 30;
     },
 
     /**
@@ -621,7 +722,9 @@ var World = new Class({
         graphics.lineStyle(1, this.defaults.bodyDebugColor);
         graphics.beginPath();
 
-        for (var i = 0; i < bodies.length; i++)
+        var i,j;
+
+        for (i = 0; i < bodies.length; i++)
         {
             if (!bodies[i].render.visible)
             {
@@ -630,7 +733,7 @@ var World = new Class({
 
             // Handle drawing both single bodies and compound bodies. If compound, draw both the
             // convex hull (first part) and the rest of the bodies.
-            for (var j = 0; j < bodies[i].parts.length; j++)
+            for (j = 0; j < bodies[i].parts.length; j++)
             {
                 var body = bodies[i].parts[j];
 
@@ -648,7 +751,101 @@ var World = new Class({
                 graphics.strokePath();
             }
         }
+
         graphics.closePath();
+
+        if (this.defaults.debugShowJoint)
+        {
+            graphics.lineStyle(2, this.defaults.jointDebugColor);
+
+            // Render constraints 
+            var constraints = Composite.allConstraints(this.localWorld);
+
+            for (i = 0; i < constraints.length; i++)
+            {
+                var constraint = constraints[i];
+
+                if (!constraint.render.visible || !constraint.pointA || !constraint.pointB)
+                {
+                    continue;
+                }
+
+                if (constraint.render.lineWidth)
+                {
+                    graphics.lineStyle(constraint.render.lineWidth, Common.colorToNumber(constraint.render.strokeStyle));
+                }
+
+                var bodyA = constraint.bodyA;
+                var bodyB = constraint.bodyB;
+                var start;
+                var end;
+
+                if (bodyA)
+                {
+                    start = Vector.add(bodyA.position, constraint.pointA);
+                }
+                else
+                {
+                    start = constraint.pointA;
+                }
+
+                if (constraint.render.type === 'pin')
+                {
+                    graphics.beginPath();
+                    graphics.arc(start.x, start.y, 3, 0, 2 * Math.PI);
+                    graphics.closePath();
+                }
+                else
+                {
+                    if (bodyB)
+                    {
+                        end = Vector.add(bodyB.position, constraint.pointB);
+                    }
+                    else
+                    {
+                        end = constraint.pointB;
+                    }
+
+                    graphics.beginPath();
+                    graphics.moveTo(start.x, start.y);
+
+                    if (constraint.render.type === 'spring')
+                    {
+                        var delta = Vector.sub(end, start);
+                        var normal = Vector.perp(Vector.normalise(delta));
+                        var coils = Math.ceil(Common.clamp(constraint.length / 5, 12, 20));
+                        var offset;
+
+                        for (j = 1; j < coils; j += 1)
+                        {
+                            offset = (j % 2 === 0) ? 1 : -1;
+
+                            graphics.lineTo(
+                                start.x + delta.x * (j / coils) + normal.x * offset * 4,
+                                start.y + delta.y * (j / coils) + normal.y * offset * 4
+                            );
+                        }
+                    }
+
+                    graphics.lineTo(end.x, end.y);
+                }
+
+                if (constraint.render.lineWidth)
+                {
+                    graphics.strokePath();
+                }
+
+                if (constraint.render.anchors)
+                {
+                    graphics.fillStyle(Common.colorToNumber(constraint.render.strokeStyle));
+                    graphics.beginPath();
+                    graphics.arc(start.x, start.y, 6, 0, 2 * Math.PI);
+                    graphics.arc(end.x, end.y, 6, 0, 2 * Math.PI);
+                    graphics.closePath();
+                    graphics.fillPath();
+                }
+            }
+        }
     },
 
     /**
@@ -657,10 +854,10 @@ var World = new Class({
      * @method Phaser.Physics.Matter.World#fromPath
      * @since 3.0.0
      *
-     * @param {[type]} path - [description]
-     * @param {[type]} points - [description]
+     * @param {string} path - [description]
+     * @param {array} points - [description]
      *
-     * @return {[type]} [description]
+     * @return {array} [description]
      */
     fromPath: function (path, points)
     {
@@ -687,6 +884,10 @@ var World = new Class({
      */
     shutdown: function ()
     {
+        MatterEvents.off(this.engine);
+
+        this.removeAllListeners();
+
         MatterWorld.clear(this.localWorld, false);
 
         Engine.clear(this.engine);

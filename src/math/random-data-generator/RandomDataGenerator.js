@@ -15,7 +15,7 @@ var Class = require('../../utils/Class');
  * @constructor
  * @since 3.0.0
  *
- * @param {array} [seeds] - [description]
+ * @param {string[]} [seeds] - [description]
  */
 var RandomDataGenerator = new Class({
 
@@ -81,8 +81,8 @@ var RandomDataGenerator = new Class({
         /**
          * [description]
          *
-         * @name Phaser.Math.RandomDataGenerator#sign
-         * @type {array}
+         * @name Phaser.Math.RandomDataGenerator#signs
+         * @type {number[]}
          * @since 3.0.0
          */
         this.signs = [ -1, 1 ];
@@ -121,7 +121,7 @@ var RandomDataGenerator = new Class({
      * @since 3.0.0
      * @private
      *
-     * @param {[type]} data - [description]
+     * @param {string} data - [description]
      *
      * @return {number} The hashed value.
      */
@@ -155,7 +155,7 @@ var RandomDataGenerator = new Class({
      * @method Phaser.Math.RandomDataGenerator#init
      * @since 3.0.0
      *
-     * @param {string|array} seeds - [description]
+     * @param {(string|string[])} seeds - [description]
      */
     init: function (seeds)
     {
@@ -177,7 +177,7 @@ var RandomDataGenerator = new Class({
      * @method Phaser.Math.RandomDataGenerator#sow
      * @since 3.0.0
      *
-     * @param {any[]} seeds - The array of seeds: the `toString()` of each value is used.
+     * @param {string[]} seeds - The array of seeds: the `toString()` of each value is used.
      */
     sow: function (seeds)
     {
@@ -339,7 +339,7 @@ var RandomDataGenerator = new Class({
      *
      * @param {array} array - The array to pick a random element from.
      *
-     * @return {any} A random member of the array.
+     * @return {*} A random member of the array.
      */
     pick: function (array)
     {
@@ -367,7 +367,7 @@ var RandomDataGenerator = new Class({
      *
      * @param {array} array - The array to pick a random element from.
      *
-     * @return {any} A random member of the array.
+     * @return {*} A random member of the array.
      */
     weightedPick: function (array)
     {
@@ -449,6 +449,32 @@ var RandomDataGenerator = new Class({
         }
 
         return [ '!rnd', this.c, this.s0, this.s1, this.s2 ].join(',');
+    },
+
+    /**
+     * Shuffles the given array, using the current seed.
+     *
+     * @method Phaser.Math.RandomDataGenerator#shuffle
+     * @since 3.7.0
+     * 
+     * @param {array[]} [array] - The array to be shuffled.
+     *
+     * @return {array} The shuffled array.
+     */
+    shuffle: function (array)
+    {
+        var len = array.length - 1;
+
+        for (var i = len; i > 0; i--)
+        {
+            var randomIndex = Math.floor(this.frac() * (len + 1));
+            var itemAtIndex = array[randomIndex];
+
+            array[randomIndex] = array[i];
+            array[i] = itemAtIndex;
+        }
+
+        return array;
     }
 
 });

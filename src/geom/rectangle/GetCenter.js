@@ -14,10 +14,12 @@ var Point = require('../point/Point');
  * @function Phaser.Geom.Rectangle.GetCenter
  * @since 3.0.0
  *
- * @param {Phaser.Geom.Rectangle} rect - [description]
- * @param {Phaser.Geom.Point|object} [out] - [description]
+ * @generic {Phaser.Geom.Point} O - [out,$return]
  *
- * @return {Phaser.Geom.Point|object} [description]
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {(Phaser.Geom.Point|object)} [description]
  */
 var GetCenter = function (rect, out)
 {

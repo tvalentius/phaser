@@ -9,12 +9,14 @@
  *
  * @function Phaser.Actions.SetHitArea
  * @since 3.0.0
- * 
- * @param {array} items - An array of Game Objects. The contents of this array are updated by this Action.
- * @param {any} hitArea - [description]
- * @param {function} hitAreaCallback - [description]
  *
- * @return {array} The array of Game Objects that was passed to this Action.
+ * @generic {Phaser.GameObjects.GameObject[]} G - [items,$return]
+ *
+ * @param {(array|Phaser.GameObjects.GameObject[])} items - An array of Game Objects. The contents of this array are updated by this Action.
+ * @param {*} hitArea - [description]
+ * @param {HitAreaCallback} hitAreaCallback - [description]
+ *
+ * @return {(array|Phaser.GameObjects.GameObject[])} The array of Game Objects that was passed to this Action.
  */
 var SetHitArea = function (items, hitArea, hitAreaCallback)
 {

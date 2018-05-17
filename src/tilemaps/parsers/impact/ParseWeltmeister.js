@@ -10,6 +10,10 @@ var ParseTileLayers = require('./ParseTileLayers');
 var ParseTilesets = require('./ParseTilesets');
 
 /**
+ * @namespace Phaser.Tilemaps.Parsers.Impact
+ */
+
+/**
  * Parses a Weltmeister JSON object into a new MapData object.
  *
  * @function Phaser.Tilemaps.Parsers.Impact.ParseWeltmeister
@@ -24,7 +28,7 @@ var ParseTilesets = require('./ParseTilesets');
  * consumption. However if your map is small or you need to update the tiles dynamically, then leave
  * the default value set.
  *
- * @return {object|null} [description]
+ * @return {?object} [description]
  */
 var ParseWeltmeister = function (name, json, insertNull)
 {

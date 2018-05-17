@@ -13,12 +13,14 @@ var Point = require('../point/Point');
  * @function Phaser.Geom.Triangle.GetPoints
  * @since 3.0.0
  *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
  * @param {Phaser.Geom.Triangle} triangle - [description]
  * @param {integer} quantity - [description]
  * @param {number} stepRate - [description]
- * @param {[type]} out - [description]
+ * @param {(array|Phaser.Geom.Point[])} [out] - [description]
  *
- * @return {[type]} [description]
+ * @return {(array|Phaser.Geom.Point[])} [description]
  */
 var GetPoints = function (triangle, quantity, stepRate, out)
 {

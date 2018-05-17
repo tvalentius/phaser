@@ -7,11 +7,11 @@
 /**
  * Used internally by the KeyboardManager.
  *
- * @function Phaser.Input.Keyboard.Keys.ProcessKeyDown
+ * @function Phaser.Input.Keyboard.ProcessKeyDown
  * @since 3.0.0
  *
  * @param {Phaser.Input.Keyboard.Key} key - [description]
- * @param {[type]} event - [description]
+ * @param {KeyboardEvent} event - [description]
  *
  * @return {Phaser.Input.Keyboard.Key} [description]
  */
@@ -40,12 +40,11 @@ var ProcessKeyDown = function (key, event)
         key.isUp = false;
         key.timeDown = event.timeStamp;
         key.duration = 0;
+        key._justDown = true;
+        key._justUp = false;
     }
 
     key.repeats++;
-
-    key._justDown = true;
-    key._justUp = false;
 
     return key;
 };

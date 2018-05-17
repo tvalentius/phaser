@@ -24,11 +24,11 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setRectangle
      * @since 3.0.0
      *
-     * @param {[type]} width - [description]
-     * @param {[type]} height - [description]
-     * @param {[type]} options - [description]
+     * @param {number} width - [description]
+     * @param {number} height - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setRectangle: function (width, height, options)
     {
@@ -41,10 +41,10 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setCircle
      * @since 3.0.0
      *
-     * @param {[type]} radius - [description]
-     * @param {[type]} options - [description]
+     * @param {number} radius - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setCircle: function (radius, options)
     {
@@ -57,11 +57,11 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setPolygon
      * @since 3.0.0
      *
-     * @param {[type]} radius - [description]
-     * @param {[type]} sides - [description]
-     * @param {[type]} options - [description]
+     * @param {number} radius - [description]
+     * @param {number} sides - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setPolygon: function (radius, sides, options)
     {
@@ -74,12 +74,12 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setTrapezoid
      * @since 3.0.0
      *
-     * @param {[type]} width - [description]
-     * @param {[type]} height - [description]
-     * @param {[type]} slope - [description]
-     * @param {[type]} options - [description]
+     * @param {number} width - [description]
+     * @param {number} height - [description]
+     * @param {number} slope - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setTrapezoid: function (width, height, slope, options)
     {
@@ -92,10 +92,10 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setExistingBody
      * @since 3.0.0
      *
-     * @param {[type]} body - [description]
-     * @param {[type]} addToWorld - [description]
+     * @param {MatterJS.Body} body - [description]
+     * @param {boolean} [addToWorld=true] - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setExistingBody: function (body, addToWorld)
     {
@@ -114,7 +114,7 @@ var SetBody = {
 
         var _this = this;
 
-        this.body.destroy = function ()
+        body.destroy = function destroy ()
         {
             _this.world.remove(_this.body);
             _this.body.gameObject = null;
@@ -122,7 +122,12 @@ var SetBody = {
 
         if (addToWorld)
         {
-            this.world.add(this.body);
+            this.world.add(body);
+        }
+
+        if (this._originComponent)
+        {
+            this.setOrigin(body.render.sprite.xOffset, body.render.sprite.yOffset);
         }
 
         return this;
@@ -134,10 +139,10 @@ var SetBody = {
      * @method Phaser.Physics.Matter.Components.SetBody#setBody
      * @since 3.0.0
      *
-     * @param {[type]} config - [description]
-     * @param {[type]} options - [description]
+     * @param {object} config - [description]
+     * @param {object} options - [description]
      *
-     * @return {[type]} [description]
+     * @return {Phaser.GameObjects.GameObject} This Game Object.
      */
     setBody: function (config, options)
     {

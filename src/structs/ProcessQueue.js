@@ -14,6 +14,8 @@ var Class = require('../utils/Class');
  * @memberOf Phaser.Structs
  * @constructor
  * @since 3.0.0
+ *
+ * @generic T
  */
 var ProcessQueue = new Class({
 
@@ -24,8 +26,10 @@ var ProcessQueue = new Class({
         /**
          * [description]
          *
+         * @genericUse {T[]} - [$type]
+         *
          * @name Phaser.Structs.ProcessQueue#_pending
-         * @type {array}
+         * @type {Array.<*>}
          * @private
          * @default []
          * @since 3.0.0
@@ -35,8 +39,10 @@ var ProcessQueue = new Class({
         /**
          * [description]
          *
+         * @genericUse {T[]} - [$type]
+         *
          * @name Phaser.Structs.ProcessQueue#_active
-         * @type {array}
+         * @type {Array.<*>}
          * @private
          * @default []
          * @since 3.0.0
@@ -46,8 +52,10 @@ var ProcessQueue = new Class({
         /**
          * [description]
          *
+         * @genericUse {T[]} - [$type]
+         *
          * @name Phaser.Structs.ProcessQueue#_destroy
-         * @type {array}
+         * @type {Array.<*>}
          * @private
          * @default []
          * @since 3.0.0
@@ -72,7 +80,10 @@ var ProcessQueue = new Class({
      * @method Phaser.Structs.ProcessQueue#add
      * @since 3.0.0
      *
-     * @param {any} item - [description]
+     * @genericUse {T} - [item]
+     * @genericUse {Phaser.Structs.ProcessQueue.<T>} - [$return]
+     *
+     * @param {*} item - [description]
      *
      * @return {Phaser.Structs.ProcessQueue} This Process Queue object.
      */
@@ -91,7 +102,10 @@ var ProcessQueue = new Class({
      * @method Phaser.Structs.ProcessQueue#remove
      * @since 3.0.0
      *
-     * @param {any} item - [description]
+     * @genericUse {T} - [item]
+     * @genericUse {Phaser.Structs.ProcessQueue.<T>} - [$return]
+     *
+     * @param {*} item - [description]
      *
      * @return {Phaser.Structs.ProcessQueue} This Process Queue object.
      */
@@ -110,7 +124,9 @@ var ProcessQueue = new Class({
      * @method Phaser.Structs.ProcessQueue#update
      * @since 3.0.0
      *
-     * @return {array} [description]
+     * @genericUse {T[]} - [$return]
+     *
+     * @return {Array.<*>} [description]
      */
     update: function ()
     {
@@ -167,7 +183,9 @@ var ProcessQueue = new Class({
      * @method Phaser.Structs.ProcessQueue#getActive
      * @since 3.0.0
      *
-     * @return {array} [description]
+     * @genericUse {T[]} - [$return]
+     *
+     * @return {Array.<*>} [description]
      */
     getActive: function ()
     {

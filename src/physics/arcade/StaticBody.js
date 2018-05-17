@@ -320,7 +320,7 @@ var StaticBody = new Class({
          * [description]
          *
          * @name Phaser.Physics.Arcade.StaticBody#checkCollision
-         * @type {object}
+         * @type {ArcadeBodyCollision}
          * @since 3.0.0
          */
         this.checkCollision = { none: false, up: true, down: true, left: true, right: true };
@@ -329,7 +329,7 @@ var StaticBody = new Class({
          * [description]
          *
          * @name Phaser.Physics.Arcade.StaticBody#touching
-         * @type {object}
+         * @type {ArcadeBodyCollision}
          * @since 3.0.0
          */
         this.touching = { none: true, up: false, down: false, left: false, right: false };
@@ -338,7 +338,7 @@ var StaticBody = new Class({
          * [description]
          *
          * @name Phaser.Physics.Arcade.StaticBody#wasTouching
-         * @type {object}
+         * @type {ArcadeBodyCollision}
          * @since 3.0.0
          */
         this.wasTouching = { none: true, up: false, down: false, left: false, right: false };
@@ -347,7 +347,7 @@ var StaticBody = new Class({
          * [description]
          *
          * @name Phaser.Physics.Arcade.StaticBody#blocked
-         * @type {object}
+         * @type {ArcadeBodyCollision}
          * @since 3.0.0
          */
         this.blocked = { none: true, up: false, down: false, left: false, right: false };
@@ -420,6 +420,38 @@ var StaticBody = new Class({
         this.halfHeight = Math.abs(this.height / 2);
 
         this.center.set(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
+
+        this.world.staticTree.insert(this);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setOffset
+     * @since 3.4.0
+     *
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    setOffset: function (x, y)
+    {
+        if (y === undefined) { y = x; }
+
+        this.world.staticTree.remove(this);
+
+        this.position.x -= this.offset.x;
+        this.position.y -= this.offset.y;
+
+        this.offset.set(x, y);
+
+        this.position.x += this.offset.x;
+        this.position.y += this.offset.y;
+
+        this.updateCenter();
 
         this.world.staticTree.insert(this);
 
@@ -564,9 +596,9 @@ var StaticBody = new Class({
      * @method Phaser.Physics.Arcade.StaticBody#getBounds
      * @since 3.0.0
      *
-     * @param {object} obj - [description]
+     * @param {ArcadeBodyBounds} obj - [description]
      *
-     * @return {object} [description]
+     * @return {ArcadeBodyBounds} [description]
      */
     getBounds: function (obj)
     {

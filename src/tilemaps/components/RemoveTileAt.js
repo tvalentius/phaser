@@ -13,16 +13,17 @@ var CalculateFacesAt = require('./CalculateFacesAt');
  * collision information.
  *
  * @function Phaser.Tilemaps.Components.RemoveTileAt
+ * @private
  * @since 3.0.0
  *
- * @param {integer|Phaser.Tilemaps.Tile} tile - The index of this tile to set or a Tile object.
+ * @param {(integer|Phaser.Tilemaps.Tile)} tile - The index of this tile to set or a Tile object.
  * @param {integer} tileX - [description]
  * @param {integer} tileY - [description]
  * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified
  * location with null instead of a Tile with an index of -1.
  * @param {boolean} [recalculateFaces=true] - [description]
  * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
- * 
+ *
  * @return {Phaser.Tilemaps.Tile} The Tile object that was removed.
  */
 var RemoveTileAt = function (tileX, tileY, replaceWithNull, recalculateFaces, layer)

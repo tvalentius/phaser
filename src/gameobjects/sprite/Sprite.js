@@ -28,11 +28,11 @@ var SpriteRender = require('./SpriteRender');
  * @since 3.0.0
  *
  * @extends Phaser.GameObjects.Components.Alpha
- * @extends Phaser.GameObjects.Components.Animation
  * @extends Phaser.GameObjects.Components.BlendMode
  * @extends Phaser.GameObjects.Components.Depth
  * @extends Phaser.GameObjects.Components.Flip
  * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
  * @extends Phaser.GameObjects.Components.Origin
  * @extends Phaser.GameObjects.Components.Pipeline
  * @extends Phaser.GameObjects.Components.ScaleMode
@@ -47,7 +47,7 @@ var SpriteRender = require('./SpriteRender');
  * @param {number} x - The horizontal position of this Game Object in the world.
  * @param {number} y - The vertical position of this Game Object in the world.
  * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
- * @param {string|integer} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
  */
 var Sprite = new Class({
 
@@ -59,6 +59,7 @@ var Sprite = new Class({
         Components.Depth,
         Components.Flip,
         Components.GetBounds,
+        Components.Mask,
         Components.Origin,
         Components.Pipeline,
         Components.ScaleMode,
@@ -81,7 +82,7 @@ var Sprite = new Class({
          * [description]
          *
          * @name Phaser.GameObjects.Sprite#anims
-         * @type {[type]}
+         * @type {Phaser.GameObjects.Components.Animation}
          * @since 3.0.0
          */
         this.anims = new Components.Animation(this);
@@ -97,6 +98,7 @@ var Sprite = new Class({
      * [description]
      *
      * @method Phaser.GameObjects.Sprite#preUpdate
+     * @protected
      * @since 3.0.0
      *
      * @param {number} time - [description]
@@ -114,8 +116,8 @@ var Sprite = new Class({
      * @since 3.0.0
      *
      * @param {string} key - [description]
-     * @param {boolean} ignoreIfPlaying - [description]
-     * @param {integer|string} startFrame - [description]
+     * @param {boolean} [ignoreIfPlaying=false] - [description]
+     * @param {integer} [startFrame=0] - [description]
      *
      * @return {Phaser.GameObjects.Sprite} This Game Object.
      */
@@ -132,7 +134,7 @@ var Sprite = new Class({
      * @method Phaser.GameObjects.Sprite#toJSON
      * @since 3.0.0
      *
-     * @return {object} [description]
+     * @return {JSONGameObject} A JSON representation of the Game Object.
      */
     toJSON: function ()
     {

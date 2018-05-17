@@ -14,13 +14,13 @@ var pool = [];
 var _disableContextSmoothing = false;
 
 /**
- * The CanvasPool is a global static object, that allows Phaser to recycle and pool Canvas DOM elements.
+ * The CanvasPool is a global static object, that allows Phaser to recycle and pool 2D Context Canvas DOM elements.
+ * It does not pool WebGL Contexts, because once the context options are set they cannot be modified again, 
+ * which is useless for some of the Phaser pipelines / renderer.
  *
- * This singleton is instantiated as soon as Phaser loads,
- * before a Phaser.Game instance has even been created.
- * Which means all instances of Phaser Games on the same page
- * can share the one single pool
- * 
+ * This singleton is instantiated as soon as Phaser loads, before a Phaser.Game instance has even been created.
+ * Which means all instances of Phaser Games on the same page can share the one single pool.
+ *
  * @namespace Phaser.Display.Canvas.CanvasPool
  * @since 3.0.0
  */
@@ -31,32 +31,37 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.create
      * @since 3.0.0
-     * 
-     * @param {any} parent - [description]
-     * @param {integer} [width=1] - [description]
-     * @param {integer} [height=1] - [description]
-     * @param {integer} [type] - [description]
-     * 
+     *
+     * @param {*} parent - The parent of the Canvas object.
+     * @param {integer} [width=1] - The width of the Canvas.
+     * @param {integer} [height=1] - The height of the Canvas.
+     * @param {integer} [canvasType=Phaser.CANVAS] - The type of the Canvas. Either `Phaser.CANVAS` or `Phaser.WEBGL`.
+     * @param {boolean} [selfParent=false] - Use the generated Canvas element as the parent?
+     *
      * @return {HTMLCanvasElement} [description]
      */
-    var create = function (parent, width, height, type)
+    var create = function (parent, width, height, canvasType, selfParent)
     {
         if (width === undefined) { width = 1; }
         if (height === undefined) { height = 1; }
-        if (type === undefined) { type = CONST.CANVAS; }
+        if (canvasType === undefined) { canvasType = CONST.CANVAS; }
+        if (selfParent === undefined) { selfParent = false; }
 
         var canvas;
-        var container = first(type);
+        var container = first(canvasType);
 
         if (container === null)
         {
             container = {
                 parent: parent,
                 canvas: document.createElement('canvas'),
-                type: type
+                type: canvasType
             };
 
-            pool.push(container);
+            if (canvasType === CONST.CANVAS)
+            {
+                pool.push(container);
+            }
 
             canvas = container.canvas;
         }
@@ -67,14 +72,19 @@ var CanvasPool = function ()
             canvas = container.canvas;
         }
 
+        if (selfParent)
+        {
+            container.parent = canvas;
+        }
+
         canvas.width = width;
         canvas.height = height;
 
-        if (_disableContextSmoothing && type === CONST.CANVAS)
+        if (_disableContextSmoothing && canvasType === CONST.CANVAS)
         {
             Smoothing.disable(canvas.getContext('2d'));
         }
-        
+
         return canvas;
     };
 
@@ -83,11 +93,11 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.create2D
      * @since 3.0.0
-     * 
-     * @param {any} parent - [description]
-     * @param {integer} [width=1] - [description]
-     * @param {integer} [height=1] - [description]
-     * 
+     *
+     * @param {*} parent - The parent of the Canvas object.
+     * @param {integer} [width=1] - The width of the Canvas.
+     * @param {integer} [height=1] - The height of the Canvas.
+     *
      * @return {HTMLCanvasElement} [description]
      */
     var create2D = function (parent, width, height)
@@ -100,11 +110,11 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.createWebGL
      * @since 3.0.0
-     * 
-     * @param {any} parent - [description]
-     * @param {integer} [width=1] - [description]
-     * @param {integer} [height=1] - [description]
-     * 
+     *
+     * @param {*} parent - The parent of the Canvas object.
+     * @param {integer} [width=1] - The width of the Canvas.
+     * @param {integer} [height=1] - The height of the Canvas.
+     *
      * @return {HTMLCanvasElement} [description]
      */
     var createWebGL = function (parent, width, height)
@@ -117,22 +127,29 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.first
      * @since 3.0.0
-     * 
-     * @param {integer} [type] - [description]
-     * 
+     *
+     * @param {integer} [canvasType=Phaser.CANVAS] - The type of the Canvas. Either `Phaser.CANVAS` or `Phaser.WEBGL`.
+     *
      * @return {HTMLCanvasElement} [description]
      */
-    var first = function (type)
+    var first = function (canvasType)
     {
-        if (type === undefined) { type = CONST.CANVAS; }
+        if (canvasType === undefined) { canvasType = CONST.CANVAS; }
 
-        pool.forEach(function (container)
+        if (canvasType === CONST.WEBGL)
         {
-            if (!container.parent && container.type === type)
+            return null;
+        }
+
+        for (var i = 0; i < pool.length; i++)
+        {
+            var container = pool[i];
+
+            if (!container.parent && container.type === canvasType)
             {
                 return container;
             }
-        });
+        }
 
         return null;
     };
@@ -143,8 +160,8 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.remove
      * @since 3.0.0
-     * 
-     * @param {any} parent - [description]
+     *
+     * @param {*} parent - [description]
      */
     var remove = function (parent)
     {
@@ -155,7 +172,6 @@ var CanvasPool = function ()
         {
             if ((isCanvas && container.canvas === parent) || (!isCanvas && container.parent === parent))
             {
-                // console.log('CanvasPool.remove found and removed');
                 container.parent = null;
                 container.canvas.width = 1;
                 container.canvas.height = 1;
@@ -168,7 +184,7 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.total
      * @since 3.0.0
-     * 
+     *
      * @return {integer} [description]
      */
     var total = function ()
@@ -191,7 +207,7 @@ var CanvasPool = function ()
      *
      * @function Phaser.Display.Canvas.CanvasPool.free
      * @since 3.0.0
-     * 
+     *
      * @return {integer} [description]
      */
     var free = function ()
