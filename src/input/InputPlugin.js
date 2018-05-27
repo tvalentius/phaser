@@ -367,6 +367,7 @@ var InputPlugin = new Class({
 
         //  Clear the removal list
         removeList.length = 0;
+        this._pendingRemoval.length = 0;
 
         //  Move pendingInsertion to list (also clears pendingInsertion at the same time)
         this._list = current.concat(insertList.splice(0));
@@ -385,6 +386,14 @@ var InputPlugin = new Class({
     clear: function (gameObject)
     {
         var input = gameObject.input;
+
+        // If GameObject.input already cleared from higher class
+        if (!input)
+        {
+            return;
+        }
+
+        this.queueForRemoval(gameObject);
 
         input.gameObject = undefined;
         input.target = undefined;
@@ -686,7 +695,7 @@ var InputPlugin = new Class({
         }
 
         //  4 = Pointer actively dragging the draglist and has moved
-        if (pointer.dragState === 4 && pointer.justMoved)
+        if (pointer.dragState === 4 && pointer.justMoved && !pointer.justUp)
         {
             var dropZones = this._tempZones;
 
@@ -779,32 +788,36 @@ var InputPlugin = new Class({
 
                 input = gameObject.input;
 
-                input.dragState = 0;
-
-                input.dragX = input.localX - gameObject.displayOriginX;
-                input.dragY = input.localY - gameObject.displayOriginY;
-
-                var dropped = false;
-
-                if (input.target)
+                if (input.dragState === 2)
                 {
-                    gameObject.emit('drop', pointer, input.target);
+                    input.dragState = 0;
 
-                    this.emit('drop', pointer, gameObject, input.target);
+                    input.dragX = input.localX - gameObject.displayOriginX;
+                    input.dragY = input.localY - gameObject.displayOriginY;
 
-                    input.target = null;
+                    var dropped = false;
 
-                    dropped = true;
+                    if (input.target)
+                    {
+                        gameObject.emit('drop', pointer, input.target);
+
+                        this.emit('drop', pointer, gameObject, input.target);
+
+                        input.target = null;
+
+                        dropped = true;
+                    }
+
+                    //  And finally the dragend event
+
+                    gameObject.emit('dragend', pointer, input.dragX, input.dragY, dropped);
+
+                    this.emit('dragend', pointer, gameObject, dropped);
                 }
-
-                //  And finally the dragend event
-
-                gameObject.emit('dragend', pointer, input.dragX, input.dragY, dropped);
-
-                this.emit('dragend', pointer, gameObject, dropped);
             }
 
             pointer.dragState = 0;
+
             list.splice(0);
         }
 
@@ -1486,9 +1499,7 @@ var InputPlugin = new Class({
             return;
         }
 
-        var pointer = manager.activePointer;
-
-        var runUpdate = (pointer.dirty || this.pollRate === 0);
+        var runUpdate = (manager.dirty || this.pollRate === 0);
 
         if (this.pollRate > -1)
         {
@@ -1508,55 +1519,62 @@ var InputPlugin = new Class({
             return;
         }
 
-        //  Always reset this array
-        this._tempZones = [];
+        var pointers = this.manager.pointers;
 
-        //  _temp contains a hit tested and camera culled list of IO objects
-        this._temp = this.hitTestPointer(pointer);
-
-        this.sortGameObjects(this._temp);
-        this.sortGameObjects(this._tempZones);
-
-        if (this.topOnly)
+        for (var i = 0; i < pointers.length; i++)
         {
-            //  Only the top-most one counts now, so safely ignore the rest
-            if (this._temp.length)
+            var pointer = pointers[i];
+
+            //  Always reset this array
+            this._tempZones = [];
+
+            //  _temp contains a hit tested and camera culled list of IO objects
+            this._temp = this.hitTestPointer(pointer);
+
+            this.sortGameObjects(this._temp);
+            this.sortGameObjects(this._tempZones);
+
+            if (this.topOnly)
             {
-                this._temp.splice(1);
+                //  Only the top-most one counts now, so safely ignore the rest
+                if (this._temp.length)
+                {
+                    this._temp.splice(1);
+                }
+
+                if (this._tempZones.length)
+                {
+                    this._tempZones.splice(1);
+                }
             }
 
-            if (this._tempZones.length)
+            var total = this.processDragEvents(pointer, time);
+
+            if (!pointer.wasTouch)
             {
-                this._tempZones.splice(1);
+                total += this.processOverOutEvents(pointer);
             }
-        }
 
-        var total = this.processDragEvents(pointer, time);
+            if (pointer.justDown)
+            {
+                total += this.processDownEvents(pointer);
+            }
 
-        if (!pointer.wasTouch)
-        {
-            total += this.processOverOutEvents(pointer);
-        }
+            if (pointer.justUp)
+            {
+                total += this.processUpEvents(pointer);
+            }
 
-        if (pointer.justDown)
-        {
-            total += this.processDownEvents(pointer);
-        }
+            if (pointer.justMoved)
+            {
+                total += this.processMoveEvents(pointer);
+            }
 
-        if (pointer.justUp)
-        {
-            total += this.processUpEvents(pointer);
-        }
-
-        if (pointer.justMoved)
-        {
-            total += this.processMoveEvents(pointer);
-        }
-
-        if (total > 0 && manager.globalTopOnly)
-        {
-            //  We interacted with an event in this Scene, so block any Scenes below us from doing the same this frame
-            manager.ignoreEvents = true;
+            if (total > 0 && manager.globalTopOnly)
+            {
+                //  We interacted with an event in this Scene, so block any Scenes below us from doing the same this frame
+                manager.ignoreEvents = true;
+            }
         }
     },
 
@@ -1635,7 +1653,18 @@ var InputPlugin = new Class({
     },
 
     /**
-     * The Scene that owns this plugin is being destroyed.
+     * [description]
+     *
+     * @method Phaser.Input.InputPlugin#addPointer
+     * @since 3.10.0
+     */
+    addPointer: function ()
+    {
+        return this.manager.addPointer();
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.     
      * We need to shutdown and then kill off all external references.
      *
      * @method Phaser.Input.InputPlugin#destroy
@@ -1706,6 +1735,186 @@ var InputPlugin = new Class({
         get: function ()
         {
             return this.manager.activePointer.y;
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer1
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer1: {
+
+        get: function ()
+        {
+            return this.manager.pointers[1];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer2
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer2: {
+
+        get: function ()
+        {
+            return this.manager.pointers[2];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer3
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer3: {
+
+        get: function ()
+        {
+            return this.manager.pointers[3];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer4
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer4: {
+
+        get: function ()
+        {
+            return this.manager.pointers[4];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer5
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer5: {
+
+        get: function ()
+        {
+            return this.manager.pointers[5];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer6
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer6: {
+
+        get: function ()
+        {
+            return this.manager.pointers[6];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer7
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer7: {
+
+        get: function ()
+        {
+            return this.manager.pointers[7];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer8
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer8: {
+
+        get: function ()
+        {
+            return this.manager.pointers[8];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer9
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer9: {
+
+        get: function ()
+        {
+            return this.manager.pointers[9];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer10
+     * @type {Phaser.Input.Pointer}
+     * @readOnly
+     * @since 3.10.0
+     */
+    pointer10: {
+
+        get: function ()
+        {
+            return this.manager.pointers[10];
         }
 
     }
