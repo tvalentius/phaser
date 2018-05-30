@@ -4,11 +4,13 @@
 
 ### New Features
 
+* RenderTexture.resize will allow you to resize the underlying Render Texture to the new dimensions given. Doing this also clears the Render Texture at the same time (thanks @saqsun)
+
 ### Updates
 
 ### Bug Fixes
 
-
+* The Canvas RenderTexture drawImage method incorrectly set the values of the frame, causing them to appear wrongly scaled in the canvas renderer. Fix #3710 (thanks @saqsun)
 
 ## Version 3.9.0 - Yui - 24th May 2018
 
