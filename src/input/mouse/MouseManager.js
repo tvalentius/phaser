@@ -14,7 +14,7 @@ var Features = require('../../device/Features');
  * @classdesc
  * The Mouse Manager is a helper class that belongs to the Input Manager.
  * 
- * Its role is to listen for native DOM Mouse Events and then pass there onto the Input Manager for further processing.
+ * Its role is to listen for native DOM Mouse Events and then pass them onto the Input Manager for further processing.
  * 
  * You do not need to create this class directly, the Input Manager will create an instance of it automatically.
  *
@@ -272,6 +272,7 @@ var MouseManager = new Class({
 
     /**
      * Starts the Mouse Event listeners running.
+     * This is called automatically and does not need to be manually invoked.
      *
      * @method Phaser.Input.Mouse.MouseManager#startListeners
      * @since 3.0.0
@@ -308,6 +309,7 @@ var MouseManager = new Class({
 
     /**
      * Stops the Mouse Event listeners.
+     * This is called automatically and does not need to be manually invoked.
      *
      * @method Phaser.Input.Mouse.MouseManager#stopListeners
      * @since 3.0.0
