@@ -7,11 +7,13 @@
 var Circle = require('../geom/circle/Circle');
 var CircleContains = require('../geom/circle/Contains');
 var Class = require('../utils/Class');
+var CreateInteractiveObject = require('./CreateInteractiveObject');
+var CreatePixelPerfectHandler = require('./CreatePixelPerfectHandler');
 var DistanceBetween = require('../math/distance/DistanceBetween');
 var Ellipse = require('../geom/ellipse/Ellipse');
 var EllipseContains = require('../geom/ellipse/Contains');
 var EventEmitter = require('eventemitter3');
-var CreateInteractiveObject = require('./CreateInteractiveObject');
+var InputPluginCache = require('./InputPluginCache');
 var PluginCache = require('../plugins/PluginCache');
 var Rectangle = require('../geom/rectangle/Rectangle');
 var RectangleContains = require('../geom/rectangle/Contains');
@@ -98,6 +100,16 @@ var InputPlugin = new Class({
         this.manager = scene.sys.game.input;
 
         /**
+         * Internal event queue used for plugins only.
+         *
+         * @name Phaser.Input.InputPlugin#pluginEvents
+         * @type {Phaser.Events.EventEmitter}
+         * @private
+         * @since 3.10.0
+         */
+        this.pluginEvents = new EventEmitter();
+
+        /**
          * If set, the Input Plugin will run its update loop every frame.
          *
          * @name Phaser.Input.InputPlugin#enabled
@@ -125,16 +137,8 @@ var InputPlugin = new Class({
          */
         this.cameras;
 
-        /**
-         * A reference to the Keyboard Manager.
-         * 
-         * This property is only set if Keyboard support has been enabled in your Game Configuration file.
-         *
-         * @name Phaser.Input.InputPlugin#keyboard
-         * @type {?Phaser.Input.Keyboard.KeyboardManager}
-         * @since 3.0.0
-         */
-        this.keyboard = this.manager.keyboard;
+        //  Inject the available input plugins into this class
+        InputPluginCache.install(this);
 
         /**
          * A reference to the Mouse Manager.
@@ -148,17 +152,6 @@ var InputPlugin = new Class({
          * @since 3.0.0
          */
         this.mouse = this.manager.mouse;
-
-        /**
-         * A reference to the Gamepad Manager.
-         * 
-         * This property is only set if Gamepad support has been enabled in your Game Configuration file.
-         *
-         * @name Phaser.Input.InputPlugin#gamepad
-         * @type {?Phaser.Input.Gamepad.GamepadManager}
-         * @since 3.0.0
-         */
-        this.gamepad = this.manager.gamepad;
 
         /**
          * When set to `true` (the default) the Input Plugin will emulate DOM behavior by only emitting events from
@@ -341,6 +334,9 @@ var InputPlugin = new Class({
         this.displayList = this.systems.displayList;
 
         this.systems.events.once('destroy', this.destroy, this);
+
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('boot');
     },
 
     /**
@@ -365,6 +361,9 @@ var InputPlugin = new Class({
         eventEmitter.once('shutdown', this.shutdown, this);
 
         this.enabled = true;
+
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('start');
     },
 
     /**
@@ -377,6 +376,9 @@ var InputPlugin = new Class({
      */
     preUpdate: function ()
     {
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('preUpdate');
+
         var removeList = this._pendingRemoval;
         var insertList = this._pendingInsertion;
 
@@ -412,6 +414,127 @@ var InputPlugin = new Class({
 
         //  Move pendingInsertion to list (also clears pendingInsertion at the same time)
         this._list = current.concat(insertList.splice(0));
+    },
+
+    /**
+     * Checks to see if both this plugin and the Scene to which it belongs is active.
+     *
+     * @method Phaser.Input.InputPlugin#isActive
+     * @since 3.10.0
+     *
+     * @return {boolean} `true` if the plugin and the Scene it belongs to is active.
+     */
+    isActive: function ()
+    {
+        return (this.enabled && this.scene.sys.isActive());
+    },
+
+    /**
+     * The internal update loop for the Input Plugin.
+     * Called automatically by the Scene Systems step.
+     *
+     * @method Phaser.Input.InputPlugin#update
+     * @private
+     * @since 3.0.0
+     *
+     * @param {number} time - The time value from the most recent Game step. Typically a high-resolution timer value, or Date.now().
+     * @param {number} delta - The delta value since the last frame. This is smoothed to avoid delta spikes by the TimeStep class.
+     */
+    update: function (time, delta)
+    {
+        if (!this.isActive())
+        {
+            return;
+        }
+
+        this.pluginEvents.emit('update', time, delta);
+
+        var manager = this.manager;
+
+        //  Another Scene above this one has already consumed the input events, or we're in transition
+        if (manager.globalTopOnly && manager.ignoreEvents)
+        {
+            return;
+        }
+
+        var runUpdate = (manager.dirty || this.pollRate === 0);
+
+        if (this.pollRate > -1)
+        {
+            this._pollTimer -= delta;
+
+            if (this._pollTimer < 0)
+            {
+                runUpdate = true;
+
+                //  Discard timer diff
+                this._pollTimer = this.pollRate;
+            }
+        }
+
+        if (!runUpdate)
+        {
+            return;
+        }
+
+        var pointers = this.manager.pointers;
+
+        for (var i = 0; i < this.manager.pointersTotal; i++)
+        {
+            var pointer = pointers[i];
+
+            //  Always reset this array
+            this._tempZones = [];
+
+            //  _temp contains a hit tested and camera culled list of IO objects
+            this._temp = this.hitTestPointer(pointer);
+
+            this.sortGameObjects(this._temp);
+            this.sortGameObjects(this._tempZones);
+
+            if (this.topOnly)
+            {
+                //  Only the top-most one counts now, so safely ignore the rest
+                if (this._temp.length)
+                {
+                    this._temp.splice(1);
+                }
+
+                if (this._tempZones.length)
+                {
+                    this._tempZones.splice(1);
+                }
+            }
+
+            var total = this.processDragEvents(pointer, time);
+
+            //  TODO: Enable for touch
+            if (!pointer.wasTouch)
+            {
+                total += this.processOverOutEvents(pointer);
+            }
+
+            if (pointer.justDown)
+            {
+                total += this.processDownEvents(pointer);
+            }
+
+            if (pointer.justUp)
+            {
+                total += this.processUpEvents(pointer);
+            }
+
+            if (pointer.justMoved)
+            {
+                total += this.processMoveEvents(pointer);
+            }
+
+            if (total > 0 && manager.globalTopOnly)
+            {
+                //  We interacted with an event in this Scene, so block any Scenes below us from doing the same this frame
+                manager.ignoreEvents = true;
+            }
+        }
     },
 
     /**
@@ -1040,6 +1163,11 @@ var InputPlugin = new Class({
 
                 gameObject.emit('pointerover', pointer, gameObject.input.localX, gameObject.input.localY);
 
+                // if (gameObject.input.useHandCursor && manager.useHandCursor())
+                // {
+                //     manager.isUsingHandCursor = true;
+                // }
+
                 totalInteracted++;
             }
         }
@@ -1176,6 +1304,48 @@ var InputPlugin = new Class({
     },
 
     /**
+     * Creates a function that can be passed to `setInteractive`, `enable` or `setHitArea` that will handle
+     * pixel-perfect input detection on an Image or Sprite based Game Object, or any custom class that extends them.
+     *
+     * The following will create a sprite that is clickable on any pixel that has an alpha value >= 1.
+     *
+     * ```javascript
+     * this.add.sprite(x, y, key).setInteractive(this.input.makePixelPerfect());
+     * ```
+     * 
+     * The following will create a sprite that is clickable on any pixel that has an alpha value >= 150.
+     *
+     * ```javascript
+     * this.add.sprite(x, y, key).setInteractive(this.input.makePixelPerfect(150));
+     * ```
+     *
+     * Once you have made an Interactive Object pixel perfect it impacts all input related events for it: down, up,
+     * dragstart, drag, etc.
+     *
+     * As a pointer interacts with the Game Object it will constantly poll the texture, extracting a single pixel from
+     * the given coordinates and checking its color values. This is an expensive process, so should only be enabled on
+     * Game Objects that really need it.
+     * 
+     * You cannot make non-texture based Game Objects pixel perfect. So this will not work on Graphics, BitmapText,
+     * Render Textures, Text, Tilemaps, Containers or Particles.
+     *
+     * @method Phaser.Input.InputPlugin#makePixelPerfect
+     * @since 3.10.0
+     *
+     * @param {integer} [alphaTolerance=1] - The alpha level that the pixel should be above to be included as a successful interaction.
+     *
+     * @return {function} A Pixel Perfect Handler for use as a hitArea shape callback.
+     */
+    makePixelPerfect: function (alphaTolerance)
+    {
+        if (alphaTolerance === undefined) { alphaTolerance = 1; }
+
+        var textureManager = this.systems.textures;
+
+        return CreatePixelPerfectHandler(textureManager, alphaTolerance);
+    },
+
+    /**
      * Sets the hit area for the given array of Game Objects.
      *
      * A hit area is typically one of the geometric shapes Phaser provides, such as a `Phaser.Geom.Rectangle`
@@ -1207,6 +1377,12 @@ var InputPlugin = new Class({
         if (!Array.isArray(gameObjects))
         {
             gameObjects = [ gameObjects ];
+        }
+
+        if (typeof shape === 'function' && !callback)
+        {
+            callback = shape;
+            shape = {};
         }
 
         for (var i = 0; i < gameObjects.length; i++)
@@ -1587,107 +1763,6 @@ var InputPlugin = new Class({
     },
 
     /**
-     * The internal update loop for the Input Plugin.
-     * Called automatically by the Scene Systems step.
-     *
-     * @method Phaser.Input.InputPlugin#update
-     * @private
-     * @since 3.0.0
-     *
-     * @param {number} time - The time value from the most recent Game step. Typically a high-resolution timer value, or Date.now().
-     * @param {number} delta - The delta value since the last frame. This is smoothed to avoid delta spikes by the TimeStep class.
-     */
-    update: function (time, delta)
-    {
-        var manager = this.manager;
-
-        //  Another Scene above this one has already consumed the input events, or we're in transition
-        if (!this.enabled || (manager.globalTopOnly && manager.ignoreEvents))
-        {
-            return;
-        }
-
-        var runUpdate = (manager.dirty || this.pollRate === 0);
-
-        if (this.pollRate > -1)
-        {
-            this._pollTimer -= delta;
-
-            if (this._pollTimer < 0)
-            {
-                runUpdate = true;
-
-                //  Discard timer diff
-                this._pollTimer = this.pollRate;
-            }
-        }
-
-        if (!runUpdate)
-        {
-            return;
-        }
-
-        var pointers = this.manager.pointers;
-
-        for (var i = 0; i < this.manager.pointersTotal; i++)
-        {
-            var pointer = pointers[i];
-
-            //  Always reset this array
-            this._tempZones = [];
-
-            //  _temp contains a hit tested and camera culled list of IO objects
-            this._temp = this.hitTestPointer(pointer);
-
-            this.sortGameObjects(this._temp);
-            this.sortGameObjects(this._tempZones);
-
-            if (this.topOnly)
-            {
-                //  Only the top-most one counts now, so safely ignore the rest
-                if (this._temp.length)
-                {
-                    this._temp.splice(1);
-                }
-
-                if (this._tempZones.length)
-                {
-                    this._tempZones.splice(1);
-                }
-            }
-
-            var total = this.processDragEvents(pointer, time);
-
-            //  TODO: Enable for touch
-            if (!pointer.wasTouch)
-            {
-                total += this.processOverOutEvents(pointer);
-            }
-
-            if (pointer.justDown)
-            {
-                total += this.processDownEvents(pointer);
-            }
-
-            if (pointer.justUp)
-            {
-                total += this.processUpEvents(pointer);
-            }
-
-            if (pointer.justMoved)
-            {
-                total += this.processMoveEvents(pointer);
-            }
-
-            if (total > 0 && manager.globalTopOnly)
-            {
-                //  We interacted with an event in this Scene, so block any Scenes below us from doing the same this frame
-                manager.ignoreEvents = true;
-            }
-        }
-    },
-
-    /**
      * Adds a callback to be invoked whenever the native DOM `mouseup` or `touchend` events are received.
      * By setting the `isOnce` argument you can control if the callback is called once,
      * or every time the DOM event occurs.
@@ -1799,6 +1874,29 @@ var InputPlugin = new Class({
     },
 
     /**
+     * Adds new Pointer objects to the Input Manager.
+     *
+     * By default Phaser creates 2 pointer objects: `mousePointer` and `pointer1`.
+     *
+     * You can create more either by calling this method, or by setting the `input.activePointers` property
+     * in the Game Config.
+     *
+     * The first 10 pointers are available via the `InputPlugin.pointerX` properties, once they have been added
+     * via this method.
+     *
+     * @method Phaser.Input.InputPlugin#addPointer
+     * @since 3.10.0
+     * 
+     * @param {integer} [quantity=1] The number of new Pointers to create.
+     *
+     * @return {Phaser.Input.Pointer[]} An array containing all of the new Pointer objects that were created.
+     */
+    addPointer: function (quantity)
+    {
+        return this.manager.addPointer(quantity);
+    },
+
+    /**
      * The Scene that owns this plugin is transitioning in.
      *
      * @method Phaser.Input.InputPlugin#transitionIn
@@ -1847,6 +1945,9 @@ var InputPlugin = new Class({
      */
     shutdown: function ()
     {
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('shutdown');
+
         this._temp.length = 0;
         this._list.length = 0;
         this._draggable.length = 0;
@@ -1873,29 +1974,6 @@ var InputPlugin = new Class({
     },
 
     /**
-     * Adds new Pointer objects to the Input Manager.
-     *
-     * By default Phaser creates 2 pointer objects: `mousePointer` and `pointer1`.
-     *
-     * You can create more either by calling this method, or by setting the `input.activePointers` property
-     * in the Game Config.
-     *
-     * The first 10 pointers are available via the `InputPlugin.pointerX` properties, once they have been added
-     * via this method.
-     *
-     * @method Phaser.Input.InputPlugin#addPointer
-     * @since 3.10.0
-     * 
-     * @param {integer} [quantity=1] The number of new Pointers to create.
-     *
-     * @return {Phaser.Input.Pointer[]} An array containing all of the new Pointer objects that were created.
-     */
-    addPointer: function (quantity)
-    {
-        return this.manager.addPointer(quantity);
-    },
-
-    /**
      * The Scene that owns this plugin is being destroyed.     
      * We need to shutdown and then kill off all external references.
      *
@@ -1907,15 +1985,18 @@ var InputPlugin = new Class({
     {
         this.shutdown();
 
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('destroy');
+
+        this.pluginEvents.removeAllListeners();
+
         this.scene.sys.events.off('start', this.start, this);
 
         this.scene = null;
         this.cameras = null;
         this.manager = null;
         this.events = null;
-        this.keyboard = null;
         this.mouse = null;
-        this.gamepad = null;
     },
 
     /**

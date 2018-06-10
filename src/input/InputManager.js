@@ -7,8 +7,6 @@
 var Class = require('../utils/Class');
 var CONST = require('./const');
 var EventEmitter = require('eventemitter3');
-var Gamepad = require('./gamepad/GamepadManager');
-var Keyboard = require('./keyboard/KeyboardManager');
 var Mouse = require('./mouse/MouseManager');
 var Pointer = require('./Pointer');
 var Rectangle = require('../geom/rectangle/Rectangle');
@@ -18,9 +16,11 @@ var TransformXY = require('../math/TransformXY');
 
 /**
  * @classdesc
- * The Input Manager is responsible for handling all of the input related systems in a single Phaser Game instance.
+ * The Input Manager is responsible for handling the pointer related systems in a single Phaser Game instance.
  *
- * Based on the Game Config it will create handlers for mouse, touch, keyboard and gamepad support.
+ * Based on the Game Config it will create handlers for mouse and touch support.
+ *
+ * Keyboard and Gamepad are plugins, handled directly by the InputPlugin class.
  *
  * It then manages the event queue, pointer creation and general hit test related operations.
  *
@@ -140,14 +140,8 @@ var InputManager = new Class({
          */
         this._hasMoveCallback = false;
 
-        /**
-         * A reference to the Keyboard Manager class, if enabled via the `input.keyboard` Game Config property.
-         *
-         * @name Phaser.Input.InputManager#keyboard
-         * @type {?Phaser.Input.Keyboard.KeyboardManager}
-         * @since 3.0.0
-         */
-        this.keyboard = (config.inputKeyboard) ? new Keyboard(this) : null;
+        // this._usingHandCursor = false;
+        this.setHandCursor = false;
 
         /**
          * A reference to the Mouse Manager class, if enabled via the `input.mouse` Game Config property.
@@ -166,15 +160,6 @@ var InputManager = new Class({
          * @since 3.0.0
          */
         this.touch = (config.inputTouch) ? new Touch(this) : null;
-
-        /**
-         * A reference to the Gamepad Manager class, if enabled via the `input.gamepad` Game Config property.
-         *
-         * @name Phaser.Input.InputManager#gamepad
-         * @type {Phaser.Input.Gamepad.GamepadManager}
-         * @since 3.0.0
-         */
-        this.gamepad = (config.inputGamepad) ? new Gamepad(this) : null;
 
         /**
          * An array of Pointers that have been added to the game.
@@ -392,6 +377,10 @@ var InputManager = new Class({
     {
         var i;
 
+        //  Was the hand cursor set this frame?
+        this.setHandCursor = false;
+
+        //  TODO: Move to AFTER the events have all been processed, so the plugins are more current and not 1 frame behind?
         this.events.emit('update');
 
         this.ignoreEvents = false;
@@ -462,6 +451,11 @@ var InputManager = new Class({
             }
         }
     },
+
+    // useHandCursor: function ()
+    // {
+    //     return (this._usingHandCursor && this._setHandCursor)
+    // },
 
     //  event.targetTouches = list of all touches on the TARGET ELEMENT (i.e. game dom element)
     //  event.touches = list of all touches on the ENTIRE DOCUMENT, not just the target element
@@ -1222,11 +1216,6 @@ var InputManager = new Class({
     {
         this.events.removeAllListeners();
 
-        if (this.keyboard)
-        {
-            this.keyboard.destroy();
-        }
-
         if (this.mouse)
         {
             this.mouse.destroy();
@@ -1235,11 +1224,6 @@ var InputManager = new Class({
         if (this.touch)
         {
             this.touch.destroy();
-        }
-
-        if (this.gamepad)
-        {
-            this.gamepad.destroy();
         }
 
         for (var i = 0; i < this.pointers.length; i++)
