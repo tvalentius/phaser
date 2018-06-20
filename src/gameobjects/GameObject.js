@@ -182,7 +182,7 @@ var GameObject = new Class({
      *
      * @param {boolean} value - True if this Game Object should be set as active, false if not.
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     setActive: function (value)
     {
@@ -200,7 +200,7 @@ var GameObject = new Class({
      *
      * @param {string} value - The name to be given to this Game Object.
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     setName: function (value)
     {
@@ -216,7 +216,7 @@ var GameObject = new Class({
      * @since 3.0.0
      * @see Phaser.Data.DataManager
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     setDataEnabled: function ()
     {
@@ -330,14 +330,24 @@ var GameObject = new Class({
     /**
      * Pass this Game Object to the Input Manager to enable it for Input.
      *
+     * Input works by using hit areas, these are nearly always geometric shapes, such as rectangles or circles, that act as the hit area
+     * for the Game Object. However, you can provide your own hit area shape and callback, should you wish to handle some more advanced
+     * input detection.
+     *
+     * If no arguments are provided it will try and create a rectangle hit area based on the texture frame the Game Object is using. If
+     * this isn't a texture-bound object, such as a Graphics or BitmapText object, this will fail, and you'll need to provide a specific
+     * shape for it to use.
+     *
+     * You can also provide an Input Configuration Object as the only argument to this method.
+     *
      * @method Phaser.GameObjects.GameObject#setInteractive
      * @since 3.0.0
      *
-     * @param {*} [shape] - A geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
+     * @param {(Phaser.Input.InputConfiguration|any)} [shape] - Either an input configuration object, or a geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
      * @param {HitAreaCallback} [callback] - A callback to be invoked when the Game Object is interacted with. If you provide a shape you must also provide a callback.
      * @param {boolean} [dropZone=false] - Should this Game Object be treated as a drop zone target?
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     setInteractive: function (shape, callback, dropZone)
     {
@@ -358,7 +368,7 @@ var GameObject = new Class({
      * @method Phaser.GameObjects.GameObject#disableInteractive
      * @since 3.7.0
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     disableInteractive: function ()
     {
@@ -386,7 +396,7 @@ var GameObject = new Class({
      * @method Phaser.GameObjects.GameObject#removeInteractive
      * @since 3.7.0
      *
-     * @return {Phaser.GameObjects.GameObject} This GameObject.
+     * @return {this} This GameObject.
      */
     removeInteractive: function ()
     {

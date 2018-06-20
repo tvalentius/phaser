@@ -10,6 +10,7 @@ var Commands = require('./Commands');
 var Components = require('../components');
 var Ellipse = require('../../geom/ellipse/');
 var GameObject = require('../GameObject');
+var GetFastValue = require('../../utils/object/GetFastValue');
 var GetValue = require('../../utils/object/GetValue');
 var MATH_CONST = require('../../math/const');
 var Render = require('./GraphicsRender');
@@ -19,9 +20,9 @@ var Render = require('./GraphicsRender');
  *
  * @typedef {object} GraphicsLineStyle
  *
- * @property {number} width - The stroke width.
- * @property {number} color - The stroke color.
- * @property {number} alpha - The stroke alpha.
+ * @property {number} [width] - The stroke width.
+ * @property {number} [color] - The stroke color.
+ * @property {number} [alpha] - The stroke alpha.
  */
 
 /**
@@ -29,8 +30,8 @@ var Render = require('./GraphicsRender');
  *
  * @typedef {object} GraphicsFillStyle
  *
- * @property {number} color - The fill color.
- * @property {number} alpha - The fill alpha.
+ * @property {number} [color] - The fill color.
+ * @property {number} [alpha] - The fill alpha.
  */
 
 /**
@@ -38,8 +39,8 @@ var Render = require('./GraphicsRender');
  *
  * @typedef {object} GraphicsStyles
  *
- * @property {GraphicsLineStyle} lineStyle - The style applied to shape outlines.
- * @property {GraphicsFillStyle} fillStyle - The style applied to shape areas.
+ * @property {GraphicsLineStyle} [lineStyle] - The style applied to shape outlines.
+ * @property {GraphicsFillStyle} [fillStyle] - The style applied to shape areas.
  */
 
 /**
@@ -48,8 +49,8 @@ var Render = require('./GraphicsRender');
  * @typedef {object} GraphicsOptions
  * @extends GraphicsStyles
  *
- * @property {number} x - The x coordinate of the Graphics.
- * @property {number} y - The y coordinate of the Graphics.
+ * @property {number} [x] - The x coordinate of the Graphics.
+ * @property {number} [y] - The y coordinate of the Graphics.
  */
 
 /**
@@ -109,7 +110,7 @@ var Render = require('./GraphicsRender');
  * @extends Phaser.GameObjects.Components.ScrollFactor
  *
  * @param {Phaser.Scene} scene - The Scene to which this Graphics object belongs.
- * @param {GraphicsOptions} options - Options that set the position and default style of this Graphics object.
+ * @param {GraphicsOptions} [options] - Options that set the position and default style of this Graphics object.
  */
 var Graphics = new Class({
 
@@ -543,6 +544,106 @@ var Graphics = new Class({
         this.beginPath();
         this.moveTo(minx, y + height);
         this.lineTo(maxx + width, y + height);
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Fill a rounded rectangle with the given position, size and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#fillRoundedRect
+     * @since 3.11.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     * @param {number} [radius = 20] - The corner radius; It can also be an object to specify different radii for corners
+     * @param {number} [radius.tl = 20] Top left
+     * @param {number} [radius.tr = 20] Top right
+     * @param {number} [radius.br = 20] Bottom right
+     * @param {number} [radius.bl = 20] Bottom left
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillRoundedRect: function (x, y, width, height, radius)
+    {
+        if (radius === undefined) { radius = 20; }
+
+        var tl = radius;
+        var tr = radius;
+        var bl = radius;
+        var br = radius;
+
+        if (typeof radius !== 'number')
+        {
+            tl = GetFastValue(radius, 'tl', 20);
+            tr = GetFastValue(radius, 'tr', 20);
+            bl = GetFastValue(radius, 'bl', 20);
+            br = GetFastValue(radius, 'br', 20);
+        }
+
+        this.beginPath();
+        this.moveTo(x + tl, y);
+        this.lineTo(x + width - tr, y);
+        this.arc(x + width - tr, y + tr, tr, -MATH_CONST.TAU, 0);
+        this.lineTo(x + width, y + height - br);
+        this.arc(x + width - br, y + height - br, br, 0, MATH_CONST.TAU);
+        this.lineTo(x + bl, y + height);
+        this.arc(x + bl, y + height - bl, bl, MATH_CONST.TAU, Math.PI);
+        this.lineTo(x, y + tl);
+        this.arc(x + tl, y + tl, tl, -Math.PI, -MATH_CONST.TAU);
+        this.fillPath();
+
+        return this;
+    },
+
+    /**
+     * Stroke a rounded rectangle with the given position, size and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeRoundedRect
+     * @since 3.11.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     * @param {number} [radius = 20] - The corner radius; It can also be an object to specify different radii for corners
+     * @param {number} [radius.tl = 20] Top left
+     * @param {number} [radius.tr = 20] Top right
+     * @param {number} [radius.br = 20] Bottom right
+     * @param {number} [radius.bl = 20] Bottom left
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeRoundedRect: function (x, y, width, height, radius)
+    {
+        if (radius === undefined) { radius = 20; }
+
+        var tl = radius;
+        var tr = radius;
+        var bl = radius;
+        var br = radius;
+
+        if (typeof radius !== 'number')
+        {
+            tl = GetFastValue(radius, 'tl', 20);
+            tr = GetFastValue(radius, 'tr', 20);
+            bl = GetFastValue(radius, 'bl', 20);
+            br = GetFastValue(radius, 'br', 20);
+        }
+
+        this.beginPath();
+        this.moveTo(x + tl, y);
+        this.lineTo(x + width - tr, y);
+        this.arc(x + width - tr, y + tr, tr, -MATH_CONST.TAU, 0);
+        this.lineTo(x + width, y + height - br);
+        this.arc(x + width - br, y + height - br, br, 0, MATH_CONST.TAU);
+        this.lineTo(x + bl, y + height);
+        this.arc(x + bl, y + height - bl, bl, MATH_CONST.TAU, Math.PI);
+        this.lineTo(x, y + tl);
+        this.arc(x + tl, y + tl, tl, -Math.PI, -MATH_CONST.TAU);
         this.strokePath();
 
         return this;
@@ -1042,7 +1143,9 @@ var Graphics = new Class({
     },
 
     /**
-     * [description]
+     * Saves the state of the Graphics by pushing the current state onto a stack.
+     *
+     * The most recently saved state can then be restored with {@link Phaser.GameObjects.Graphics#restore}.
      *
      * @method Phaser.GameObjects.Graphics#save
      * @since 3.0.0
@@ -1059,7 +1162,11 @@ var Graphics = new Class({
     },
 
     /**
-     * [description]
+     * Restores the most recently saved state of the Graphics by popping from the state stack.
+     *
+     * Use {@link Phaser.GameObjects.Graphics#save} to save the current state, and call this afterwards to restore that state.
+     *
+     * If there is no saved state, this command does nothing.
      *
      * @method Phaser.GameObjects.Graphics#restore
      * @since 3.0.0
