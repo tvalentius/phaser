@@ -5,6 +5,7 @@
  */
 
 var Class = require('../utils/Class');
+var Clamp = require('../math/Clamp');
 var Extend = require('../utils/object/Extend');
 
 /**
@@ -66,6 +67,16 @@ var Frame = new Class({
          * @since 3.0.0
          */
         this.sourceIndex = sourceIndex;
+
+        /**
+         * A reference to the Texture Source WebGL Texture that this Frame is using.
+         *
+         * @name Phaser.Textures.Frame#glTexture
+         * @type {?WebGLTexture}
+         * @default null
+         * @since 3.11.0
+         */
+        this.glTexture = this.source.glTexture;
 
         /**
          * X position within the source image to cut from.
@@ -246,6 +257,46 @@ var Frame = new Class({
         this.customData = {};
 
         /**
+         * WebGL UV u0 value.
+         *
+         * @name Phaser.Textures.Frame#u0
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.u0 = 0;
+
+        /**
+         * WebGL UV v0 value.
+         *
+         * @name Phaser.Textures.Frame#v0
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.v0 = 0;
+
+        /**
+         * WebGL UV u1 value.
+         *
+         * @name Phaser.Textures.Frame#u1
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.u1 = 0;
+
+        /**
+         * WebGL UV v1 value.
+         *
+         * @name Phaser.Textures.Frame#v1
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.v1 = 0;
+
+        /**
          * The un-modified source frame, trim and UV data.
          *
          * @name Phaser.Textures.Frame#data
@@ -272,16 +323,6 @@ var Frame = new Class({
                 y: 0,
                 w: 0,
                 h: 0
-            },
-            uvs: {
-                x0: 0,
-                y0: 0,
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 0,
-                x3: 0,
-                y3: 0
             },
             radius: 0,
             drawImage: {
@@ -411,6 +452,58 @@ var Frame = new Class({
     },
 
     /**
+     * Takes a crop data object and, based on the rectangular region given, calculates the
+     * required UV coordinates in order to crop this Frame for WebGL and Canvas rendering.
+     * 
+     * This is called directly by the Game Object Texture Components `setCrop` method.
+     * Please use that method to crop a Game Object.
+     *
+     * @method Phaser.Textures.Frame#getCropUVs
+     * @since 3.11.0
+     * 
+     * @param {object} crop - The crop data object. This is the `GameObject._crop` property.
+     * @param {number} x - The x coordinate to start the crop from. Cannot be negative or exceed the Frame width.
+     * @param {number} y - The y coordinate to start the crop from. Cannot be negative or exceed the Frame height.
+     * @param {number} width - The width of the crop rectangle. Cannot exceed the Frame width.
+     * @param {number} height - The height of the crop rectangle. Cannot exceed the Frame height.
+     *
+     * @return {object} The updated crop data object.
+     */
+    getCropUVs: function (crop, x, y, width, height)
+    {
+        //  Clamp the input values
+
+        x = Clamp(x, 0, this.width);
+        y = Clamp(y, 0, this.height);
+        width = Clamp(width, 0, this.width);
+        height = Clamp(height, 0, this.height);
+
+        if (x + width > this.width)
+        {
+            width = (this.width - x);
+        }
+
+        if (y + height > this.height)
+        {
+            height = (this.height - y);
+        }
+
+        var tw = this.source.width;
+        var th = this.source.height;
+
+        crop.u0 = (x / tw);
+        crop.v0 = (y / th);
+        crop.u1 = (x + width) / tw;
+        crop.v1 = (y + height) / th;
+        crop.width = width;
+        crop.height = height;
+        crop.x = x;
+        crop.y = y;
+
+        return crop;
+    },
+
+    /**
      * Updates the internal WebGL UV cache and the drawImage cache.
      *
      * @method Phaser.Textures.Frame#updateUVs
@@ -438,19 +531,12 @@ var Frame = new Class({
 
         var tw = this.source.width;
         var th = this.source.height;
-        var uvs = this.data.uvs;
 
-        uvs.x0 = cx / tw;
-        uvs.y0 = cy / th;
+        this.u0 = cx / tw;
+        this.v0 = cy / th;
 
-        uvs.x1 = cx / tw;
-        uvs.y1 = (cy + ch) / th;
-
-        uvs.x2 = (cx + cw) / tw;
-        uvs.y2 = (cy + ch) / th;
-
-        uvs.x3 = (cx + cw) / tw;
-        uvs.y3 = cy / th;
+        this.u1 = (cx + cw) / tw;
+        this.v1 = (cy + ch) / th;
 
         return this;
     },
@@ -467,19 +553,12 @@ var Frame = new Class({
     {
         var tw = this.source.width;
         var th = this.source.height;
-        var uvs = this.data.uvs;
 
-        uvs.x3 = (this.cutX + this.cutHeight) / tw;
-        uvs.y3 = (this.cutY + this.cutWidth) / th;
+        this.u0 = (this.cutX + this.cutHeight) / tw;
+        this.v0 = this.cutY / th;
 
-        uvs.x2 = this.cutX / tw;
-        uvs.y2 = (this.cutY + this.cutWidth) / th;
-
-        uvs.x1 = this.cutX / tw;
-        uvs.y1 = this.cutY / th;
-
-        uvs.x0 = (this.cutX + this.cutHeight) / tw;
-        uvs.y0 = this.cutY / th;
+        this.u1 = this.cutX / tw;
+        this.v1 = (this.cutY + this.cutWidth) / th;
 
         return this;
     },
@@ -567,23 +646,6 @@ var Frame = new Class({
         get: function ()
         {
             return this.data.sourceSize.h;
-        }
-
-    },
-
-    /**
-     * The UV data for this Frame.
-     *
-     * @name Phaser.Textures.Frame#uvs
-     * @type {object}
-     * @readOnly
-     * @since 3.0.0
-     */
-    uvs: {
-
-        get: function ()
-        {
-            return this.data.uvs;
         }
 
     },
