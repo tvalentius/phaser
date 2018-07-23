@@ -4,7 +4,6 @@
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
 
-var GameObject = require('../GameObject');
 var Utils = require('../../renderer/webgl/Utils');
 
 /**
@@ -24,19 +23,21 @@ var Utils = require('../../renderer/webgl/Utils');
  */
 var BlitterWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
 {
-    if (GameObject.RENDER_MASK !== src.renderFlags || (src.cameraFilter > 0 && (src.cameraFilter & camera._id)))
+    var list = src.getRenderList();
+
+    if (list.length === 0)
     {
         return;
     }
 
     var pipeline = this.pipeline;
 
-    renderer.setPipeline(pipeline);
+    renderer.setPipeline(pipeline, src);
 
     var cameraScrollX = camera.scrollX * src.scrollFactorX;
     var cameraScrollY = camera.scrollY * src.scrollFactorY;
 
-    var matrix = pipeline._tempCameraMatrix;
+    var matrix = pipeline._tempMatrix1;
 
     matrix.copyFrom(camera.matrix);
 
@@ -48,7 +49,6 @@ var BlitterWebGLRenderer = function (renderer, src, interpolationPercentage, cam
         cameraScrollY = 0;
     }
 
-    var list = src.getRenderList();
     var blitterX = src.x - cameraScrollX;
     var blitterY = src.y - cameraScrollY;
     var prevTextureSourceIndex = -1;
@@ -107,6 +107,7 @@ var BlitterWebGLRenderer = function (renderer, src, interpolationPercentage, cam
         {
             tx0 |= 0;
             ty0 |= 0;
+
             tx1 |= 0;
             ty1 |= 0;
         }

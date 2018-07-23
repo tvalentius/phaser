@@ -404,6 +404,16 @@ var WebGLRenderer = new Class({
             S3TC: false
         };
 
+        /**
+         * Cached drawing buffer height to reduce gl calls.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#drawingBufferHeight
+         * @type {number}
+         * @readOnly
+         * @since 3.11.0
+         */
+        this.drawingBufferHeight = 0;
+
         this.init(this.config);
     },
 
@@ -486,7 +496,9 @@ var WebGLRenderer = new Class({
         // Setup initial WebGL state
         gl.disable(gl.DEPTH_TEST);
         gl.disable(gl.CULL_FACE);
-        gl.disable(gl.SCISSOR_TEST);
+        
+        // gl.disable(gl.SCISSOR_TEST);
+
         gl.enable(gl.BLEND);
         gl.clearColor(clearColor.redGL, clearColor.greenGL, clearColor.blueGL, 1.0);
 
@@ -507,7 +519,24 @@ var WebGLRenderer = new Class({
         this.setBlendMode(CONST.BlendModes.NORMAL);
         this.resize(this.width, this.height);
 
+        this.game.events.once('ready', this.boot, this);
+
         return this;
+    },
+
+    /**
+     * Internal boot handler. Calls 'boot' on each pipeline.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#boot
+     * @private
+     * @since 3.11.0
+     */
+    boot: function ()
+    {
+        for (var pipelineName in this.pipelines)
+        {
+            this.pipelines[pipelineName].boot();
+        }
     },
 
     /**
@@ -541,13 +570,15 @@ var WebGLRenderer = new Class({
 
         gl.viewport(0, 0, this.width, this.height);
 
-        // Update all registered pipelines
+        //  Update all registered pipelines
         for (var pipelineName in pipelines)
         {
             pipelines[pipelineName].resize(width, height, resolution);
         }
                 
         this.currentScissor.set([ 0, 0, this.width, this.height ]);
+        
+        this.drawingBufferHeight = gl.drawingBufferHeight;
 
         return this;
     },
@@ -734,7 +765,10 @@ var WebGLRenderer = new Class({
     {
         var gl = this.gl;
         var currentScissor = this.currentScissor;
-        var enabled = (x === 0 && y === 0 && w === gl.canvas.width && h === gl.canvas.height && w >= 0 && h >= 0);
+        var enabled = (x === 0 && y === 0 && w === this.width && h === this.height && w >= 0 && h >= 0);
+
+        //  TODO: If new scissor is same as old scissor, skip setting it again
+        //  TODO: If scissor is viewport size, skip setting altogether
 
         if (currentScissor[0] !== x ||
             currentScissor[1] !== y ||
@@ -759,7 +793,7 @@ var WebGLRenderer = new Class({
         }
 
         gl.enable(gl.SCISSOR_TEST);
-        gl.scissor(x, (gl.drawingBufferHeight - y - h), w, h);
+        gl.scissor(x, (this.drawingBufferHeight - y - h), w, h);
 
         return this;
     },
@@ -824,11 +858,12 @@ var WebGLRenderer = new Class({
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setPipeline
      * @since 3.0.0
      *
-     * @param {Phaser.Renderer.WebGL.WebGLPipeline} pipelineInstance - [description]
+     * @param {Phaser.Renderer.WebGL.WebGLPipeline} pipelineInstance - The pipeline instance to be activated.
+     * @param {Phaser.GameObjects.GameObject} [gameObject] - The Game Object that invoked this pipeline, if any.
      *
-     * @return {Phaser.Renderer.WebGL.WebGLPipeline} [description]
+     * @return {Phaser.Renderer.WebGL.WebGLPipeline} The pipeline that was activated.
      */
-    setPipeline: function (pipelineInstance)
+    setPipeline: function (pipelineInstance, gameObject)
     {
         if (this.currentPipeline !== pipelineInstance ||
             this.currentPipeline.vertexBuffer !== this.currentVertexBuffer ||
@@ -839,28 +874,30 @@ var WebGLRenderer = new Class({
             this.currentPipeline.bind();
         }
 
-        this.currentPipeline.onBind();
+        this.currentPipeline.onBind(gameObject);
 
         return this.currentPipeline;
     },
 
     /**
-     * [description]
+     * Sets the blend mode to the value given.
+     *
+     * If the current blend mode is different from the one given, the pipeline is flushed and the new
+     * blend mode is enabled.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setBlendMode
      * @since 3.0.0
      *
-     * @param {integer} blendModeId - [description]
+     * @param {integer} blendModeId - The blend mode to be set. Can be a `BlendModes` const or an integer value.
      *
-     * @return {Phaser.Renderer.WebGL.WebGLRenderer} [description]
+     * @return {boolean} `true` if the blend mode was changed as a result of this call, forcing a flush, otherwise `false`.
      */
     setBlendMode: function (blendModeId)
     {
         var gl = this.gl;
         var blendMode = this.blendModes[blendModeId];
 
-        if (blendModeId !== CONST.BlendModes.SKIP_CHECK &&
-            this.currentBlendMode !== blendModeId)
+        if (blendModeId !== CONST.BlendModes.SKIP_CHECK && this.currentBlendMode !== blendModeId)
         {
             this.flush();
 
@@ -877,9 +914,11 @@ var WebGLRenderer = new Class({
             }
 
             this.currentBlendMode = blendModeId;
+
+            return true;
         }
 
-        return this;
+        return false;
     },
 
     /**
@@ -1433,12 +1472,10 @@ var WebGLRenderer = new Class({
      */
     preRenderCamera: function (camera)
     {
-        var resolution = this.config.resolution;
-
-        var cx = Math.floor(camera.x * resolution);
-        var cy = Math.floor(camera.y * resolution);
-        var cw = Math.floor(camera.width * resolution);
-        var ch = Math.floor(camera.height * resolution);
+        var cx = camera._cx;
+        var cy = camera._cy;
+        var cw = camera._cw;
+        var ch = camera._ch;
 
         this.pushScissor(cx, cy, cw, ch);
 
@@ -1449,7 +1486,7 @@ var WebGLRenderer = new Class({
 
             FlatTintPipeline.batchFillRect(
                 0, 0, 1, 1, 0,
-                camera.x, camera.y, camera.width, camera.height,
+                cx, cy, cw, ch,
                 Utils.getTintFromFloats(color.redGL, color.greenGL, color.blueGL, 1.0),
                 color.alphaGL,
                 1, 0, 0, 1, 0, 0,
@@ -1480,6 +1517,8 @@ var WebGLRenderer = new Class({
         {
             FlatTintPipeline.flush();
         }
+
+        camera.dirty = false;
 
         this.popScissor();
     },
@@ -1536,13 +1575,14 @@ var WebGLRenderer = new Class({
             pipelines[key].onRender(scene, camera);
         }
 
+        //   Apply scissor for cam region + render background color, if not transparent
         this.preRenderCamera(camera);
 
-        for (var index = 0; index < childCount; ++index)
+        for (var i = 0; i < childCount; i++)
         {
-            var child = list[index];
+            var child = list[i];
 
-            if (!child.willRender())
+            if (!child.willRender(camera))
             {
                 continue;
             }
@@ -1567,6 +1607,8 @@ var WebGLRenderer = new Class({
 
         this.flush();
         this.setBlendMode(CONST.BlendModes.NORMAL);
+
+        //  Applies camera effects and pops the scissor, if set
         this.postRenderCamera(camera);
     },
 

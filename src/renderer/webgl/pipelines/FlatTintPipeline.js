@@ -192,7 +192,7 @@ var FlatTintPipeline = new Class({
      * @param {number} srcScaleX - Graphics horizontal component for scale
      * @param {number} srcScaleY - Graphics vertical component for scale
      * @param {number} srcRotation - Graphics rotation
-     * @param {number} x - Horiztonal top left coordinate of the rectangle
+     * @param {number} x - Horizontal top left coordinate of the rectangle
      * @param {number} y - Vertical top left coordinate of the rectangle
      * @param {number} width - Width of the rectangle
      * @param {number} height - Height of the rectangle
@@ -769,11 +769,9 @@ var FlatTintPipeline = new Class({
         var radius = 0;
         var startAngle = 0;
         var endAngle = 0;
-        var anticlockwise = 0;
         var path = null;
         var sin = Math.sin;
         var cos = Math.cos;
-        var PI2 = Math.PI * 2;
         var sr = sin(srcRotation);
         var cr = cos(srcRotation);
         var sra = cr * srcScaleX;
@@ -847,35 +845,12 @@ var FlatTintPipeline = new Class({
                     radius = commands[cmdIndex + 3];
                     startAngle = commands[cmdIndex + 4];
                     endAngle = commands[cmdIndex + 5];
-                    anticlockwise = commands[cmdIndex + 6];
 
                     if (lastPath === null)
                     {
                         lastPath = new Path(x + cos(startAngle) * radius, y + sin(startAngle) * radius, lineWidth, lineColor, lineAlpha * alpha);
                         pathArray.push(lastPath);
                         iteration += iterStep;
-                    }
-
-                    endAngle -= startAngle;
-
-                    if (anticlockwise)
-                    {
-                        if (endAngle < -PI2)
-                        {
-                            endAngle = -PI2;
-                        }
-                        else if (endAngle > 0)
-                        {
-                            endAngle = -PI2 + endAngle % PI2;
-                        }
-                    }
-                    else if (endAngle > PI2)
-                    {
-                        endAngle = PI2;
-                    }
-                    else if (endAngle < 0)
-                    {
-                        endAngle = PI2 + endAngle % PI2;
                     }
 
                     while (iteration < 1)
