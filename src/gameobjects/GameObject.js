@@ -5,7 +5,7 @@
  */
 
 var Class = require('../utils/Class');
-var Components = require('./components');
+var ComponentsToJSON = require('./components/ToJSON');
 var DataManager = require('../data/DataManager');
 var EventEmitter = require('eventemitter3');
 
@@ -16,7 +16,7 @@ var EventEmitter = require('eventemitter3');
  * Instead, use them as the base for your own custom classes.
  *
  * @class GameObject
- * @memberOf Phaser.GameObjects
+ * @memberof Phaser.GameObjects
  * @extends Phaser.Events.EventEmitter
  * @constructor
  * @since 3.0.0
@@ -126,7 +126,7 @@ var GameObject = new Class({
          * A bitmask that controls if this Game Object is drawn by a Camera or not.
          * Not usually set directly, instead call `Camera.ignore`, however you can
          * set this property directly using the Camera.id property:
-         * 
+         *
          * @example
          * this.cameraFilter |= camera.id
          *
@@ -173,8 +173,6 @@ var GameObject = new Class({
 
         //  Tell the Scene to re-sort the children
         scene.sys.queueDepthSort();
-
-        scene.sys.events.once('shutdown', this.destroy, this);
     },
 
     /**
@@ -234,12 +232,12 @@ var GameObject = new Class({
 
     /**
      * Allows you to store a key value pair within this Game Objects Data Manager.
-     * 
+     *
      * If the Game Object has not been enabled for data (via `setDataEnabled`) then it will be enabled
      * before setting the value.
-     * 
+     *
      * If the key doesn't already exist in the Data Manager then it is created.
-     * 
+     *
      * ```javascript
      * sprite.setData('name', 'Red Gem Stone');
      * ```
@@ -251,13 +249,13 @@ var GameObject = new Class({
      * ```
      *
      * To get a value back again you can call `getData`:
-     * 
+     *
      * ```javascript
      * sprite.getData('gold');
      * ```
-     * 
+     *
      * Or you can access the value directly via the `values` property, where it works like any other variable:
-     * 
+     *
      * ```javascript
      * sprite.data.values.gold += 50;
      * ```
@@ -295,19 +293,19 @@ var GameObject = new Class({
      * Retrieves the value for the given key in this Game Objects Data Manager, or undefined if it doesn't exist.
      *
      * You can also access values via the `values` object. For example, if you had a key called `gold` you can do either:
-     * 
+     *
      * ```javascript
      * sprite.getData('gold');
      * ```
      *
      * Or access the value directly:
-     * 
+     *
      * ```javascript
      * sprite.data.values.gold;
      * ```
      *
      * You can also pass in an array of keys, in which case an array of values will be returned:
-     * 
+     *
      * ```javascript
      * sprite.getData([ 'gold', 'armor', 'health' ]);
      * ```
@@ -385,7 +383,9 @@ var GameObject = new Class({
     },
 
     /**
-     * If this Game Object has previously been enabled for input, this will remove it.
+     * If this Game Object has previously been enabled for input, this will queue it
+     * for removal, causing it to no longer be interactive. The removal happens on
+     * the next game step, it is not immediate.
      *
      * The Interactive Object that was assigned to this Game Object will be destroyed,
      * removed from the Input Manager and cleared from this Game Object.
@@ -396,6 +396,11 @@ var GameObject = new Class({
      * If you wish to only temporarily stop an object from receiving input then use
      * `disableInteractive` instead, as that toggles the interactive state, where-as
      * this erases it completely.
+     * 
+     * If you wish to resize a hit area, don't remove and then set it as being
+     * interactive. Instead, access the hitarea object directly and resize the shape
+     * being used. I.e.: `sprite.input.hitArea.setSize(width, height)` (assuming the
+     * shape is a Rectangle, which it is by default.)
      *
      * @method Phaser.GameObjects.GameObject#removeInteractive
      * @since 3.7.0
@@ -416,6 +421,8 @@ var GameObject = new Class({
      *
      * @method Phaser.GameObjects.GameObject#update
      * @since 3.0.0
+     *
+     * @param {...*} [args] - args
      */
     update: function ()
     {
@@ -431,7 +438,7 @@ var GameObject = new Class({
      */
     toJSON: function ()
     {
-        return Components.ToJSON(this);
+        return ComponentsToJSON(this);
     },
 
     /**
@@ -440,7 +447,7 @@ var GameObject = new Class({
      *
      * @method Phaser.GameObjects.GameObject#willRender
      * @since 3.0.0
-     * 
+     *
      * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to check against this Game Object.
      *
      * @return {boolean} True if the Game Object should be rendered, otherwise false.
@@ -509,10 +516,14 @@ var GameObject = new Class({
      *
      * @method Phaser.GameObjects.GameObject#destroy
      * @since 3.0.0
+     * 
+     * @param {boolean} [fromScene=false] - Is this Game Object being destroyed as the result of a Scene shutdown?
      */
-    destroy: function ()
+    destroy: function (fromScene)
     {
-        //  This Game Object had already been destroyed
+        if (fromScene === undefined) { fromScene = false; }
+
+        //  This Game Object has already been destroyed
         if (!this.scene || this.ignoreDestroy)
         {
             return;
@@ -527,8 +538,11 @@ var GameObject = new Class({
 
         var sys = this.scene.sys;
 
-        sys.displayList.remove(this);
-        sys.updateList.remove(this);
+        if (!fromScene)
+        {
+            sys.displayList.remove(this);
+            sys.updateList.remove(this);
+        }
 
         if (this.input)
         {
@@ -550,7 +564,10 @@ var GameObject = new Class({
         }
 
         //  Tell the Scene to re-sort the children
-        sys.queueDepthSort();
+        if (!fromScene)
+        {
+            sys.queueDepthSort();
+        }
 
         this.active = false;
         this.visible = false;
@@ -568,7 +585,7 @@ var GameObject = new Class({
  * The bitmask that `GameObject.renderFlags` is compared against to determine if the Game Object will render or not.
  *
  * @constant {integer} RENDER_MASK
- * @memberOf Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects.GameObject
  * @default
  */
 GameObject.RENDER_MASK = 15;

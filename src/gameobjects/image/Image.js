@@ -20,7 +20,7 @@ var ImageRender = require('./ImageRender');
  *
  * @class Image
  * @extends Phaser.GameObjects.GameObject
- * @memberOf Phaser.GameObjects
+ * @memberof Phaser.GameObjects
  * @constructor
  * @since 3.0.0
  *
@@ -83,13 +83,13 @@ var Image = new Class({
          * @private
          * @since 3.11.0
          */
-        this._crop = { u0: 0, v0: 0, u1: 0, v1: 0, width: 0, height: 0, x: 0, y: 0, flipX: false, flipY: false, cx: 0, cy: 0, cw: 0, ch: 0 };
+        this._crop = this.resetCropObject();
 
         this.setTexture(texture, frame);
         this.setPosition(x, y);
         this.setSizeToFrame();
         this.setOriginFromFrame();
-        this.initPipeline('TextureTintPipeline');
+        this.initPipeline();
     }
 
 });
