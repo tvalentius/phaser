@@ -4,21 +4,51 @@
 
 ### New Features
 
+* The data object being sent to the Dynamic Bitmap Text callback now has a new property `parent`, which is a reference to the Bitmap Text instance that owns the data object (thanks ornyth)
+* The WebGL Renderer has a new method `clearPipeline`, which will clear down the current pipeline and reset the blend mode, ready for the context to be passed to a 3rd party library.
+* The WebGL Renderer has a new method `rebindPipeline`, which will rebind the given pipeline instance, reset the blank texture and reset the blend mode. Which is useful for recovering from 3rd party libs that have modified the gl context.
+
 ### Updates
 
+* The Mouse Manager class has been updated to remove some commented out code and refine the `startListeners` method.
+* The following Key Codes have been added, which include some missing alphabet letters in Persian and Arabic: `SEMICOLON_FIREFOX`, `COLON`, `COMMA_FIREFOX_WINDOWS`, `COMMA_FIREFOX`, `BRACKET_RIGHT_FIREFOX` and `BRACKET_LEFT_FIREFOX` (thanks @wmateam)
+* You can now modify `this.physics.world.debugGraphic.defaultStrokeWidth` to set the stroke width of any debug drawn body, previously it was always 1 (thanks @samme)
+* `TextStyle.setFont` has a new optional argument `updateText` which will sets if the text should be automatically updated or not (thanks @DotTheGreat)
+* `ProcessQueue.destroy` now sets the internal `toProcess` counter to zero.
+* The `PathFollower.pathRotationVerticalAdjust` property has been removed. It was supposed to flipY a follower when it reversed path direction, but after some testing it appears it has never worked and it's easier to do this using events, so the property and associated config value are removed. The `verticalAdjust` argument from the `setRotateToPath` method has been removed as well.
+* The config value `preserveDrawingBuffer` has been removed as it has never been used by the WebGL Renderer.
+* `PluginManager.install` returns `null` if the plugin failed to install in all cases.
+* `PluginFile` will now install the plugin into the _current_ Scene as long as the `start` or `mapping` arguments are provided.
+* MATH_CONST no longer requires or sets the Random Data Generator, this is now done in the Game Config, allowing you to require the math constants without pulling in a whole copy of the RNG with it.
+* The Dynamic Bitmap Text Canvas Renderer was creating a new data object every frame for the callback. It now uses the `callbackData` object instead, like the WebGL renderer does.
+* `WebGLRenderer.setBlendMode` has a new optional argument `force`, which will force the given blend mode to be set, regardless of the current settings.
+
 ### Bug Fixes
+
+* The `loadPlayerPhoto` function in the Instant Games plugin now listens for the updated Loader event correctly, causing the `photocomplete` event to fire properly.
+* The Rectangle Shape object wouldn't render if it didn't have a stroke, or any other objects on the display list (thanks mliko)
+* When using a font string instead of setting `fontFamily`, `fontSize` and `fontStyle` in either `Text.setStyle` or `setFont`, the style properties wouldn't get set. This isn't a problem while creating the text object, only if modifying it later (thanks @DotTheGreat)
+* Disabling camera bounds and then moving the camera to an area in a Tilemap that did not have any tile information would throw an `Uncaught Reference error` as it tried to access tiles that did not exist (thanks @Siyalatas)
+* Fixed an issue where Sprite Sheets being extracted from a texture atlas would fail if the sheet was either just a single column or single row of sprites. Fix #4096 (thanks @Cirras)
+* If you created an Arcade Physics Group without passing a configuration object, and passing an array of non-standard children, it would throw a classType runtime error. It now creates a default config object correctly (thanks @pierpo)
+* The `Camera.cull` method has been restructured so it now calculates if a Game Object is correctly in view or not, before culling it. Although not used internally, if you need to cull objects for a camera, you can now safely use this method. Fix #4092 (thanks @Cirras)
+* The Tiled Parser would ignore animated tile data if it was in the new Tiled 1.2 format. This is now accounted for, as well as 1.0 (thanks @nkholski)
+* `Array.Matrix.ReverseRows` was actually reversing the columns, but now reverses the rows.
+* `Array.Matrix.ReverseColumns` was actually reversing the rows, but now reverses the columns.
+* UnityAtlas now sets the correct file type key if using a config file object.
+* Starting with version 3.13 in the Canvas Renderer, it was possible for long-running scripts to start to get bogged-down in `fillRect` calls if the game had a background color set. The context is now saved properly to avoid this. Fix #4056 (thanks @Aveyder)
 
 ### Examples and TypeScript
 
 Thanks to the following for helping with the Phaser 3 Examples and TypeScript definitions, either by reporting errors, or even better, fixing them:
 
-@guilhermehto
+@guilhermehto @samvieten @darkwebdev
 
 ### Phaser Doc Jam
 
 The [Phaser Doc Jam](http://docjam.phaser.io) is an on-going effort to ensure that the Phaser 3 API has 100% documentation coverage. Thanks to the monumental effort of myself and the following people we're now really close to that goal! My thanks to:
 
--
+16patsle - @icbat - @samme - @telinc1 - anandu pavanan - blackhawx - candelibas - Diego Romero - Elliott Wallace - eric - Georges Gabereau - Haobo Zhang - henriacle - madclaws - marc136 - Mihail Ilinov - naum303 - NicolasRoehm - rejacobson - Robert Kowalski - rootasjey - scottwestover - stetso - therealsamf - Tigran - willblackmore - zenwaichi
 
 If you'd like to help finish off the last parts of documentation then take a look at the [Doc Jam site](http://docjam.phaser.io).
 
